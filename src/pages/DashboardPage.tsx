@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowRight, BookOpen, Gift, Bell, Users, Sparkles, ExternalLink, Rocket } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -24,11 +23,7 @@ export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const { data: progressData, isLoading: progressLoading } = useCourseProgress('zaklady-ai');
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/login');
-    }
-  }, [user, authLoading, navigate]);
+  // Auth is handled by ProtectedRoute wrapper
 
   if (authLoading || !user) {
     return (
@@ -205,7 +200,7 @@ export default function DashboardPage() {
                 <h2 className="text-lg font-semibold mb-4">{t.dashboard.quickLinks}</h2>
                 <div className="space-y-2">
                   <Link
-                    to="/courses"
+                    to="/kurzy"
                     className="flex items-center gap-3 p-3 rounded-lg hover:bg-secondary/50 transition-colors"
                   >
                     <BookOpen className="h-4 w-4 text-muted-foreground" />
@@ -218,13 +213,13 @@ export default function DashboardPage() {
                     <Sparkles className="h-4 w-4 text-muted-foreground" />
                     <span>{t.nav.profile}</span>
                   </Link>
-                  <a
-                    href="#"
+                  <Link
+                    to="/podcast"
                     className="flex items-center gap-3 p-3 rounded-lg hover:bg-secondary/50 transition-colors"
                   >
                     <ExternalLink className="h-4 w-4 text-muted-foreground" />
                     <span>{t.nav.podcast}</span>
-                  </a>
+                  </Link>
                 </div>
               </GlassCard>
             </div>

@@ -23,19 +23,19 @@ export function Footer() {
             <h4 className="font-semibold">Odkazy</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
-                <Link to="/courses" className="hover:text-foreground transition-colors">
+                <Link to="/kurzy" className="hover:text-foreground transition-colors">
                   {t.nav.courses}
                 </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-foreground transition-colors">
+                <Link to="/podcast" className="hover:text-foreground transition-colors">
                   {t.nav.podcast}
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-foreground transition-colors">
+                <Link to="/o-nas" className="hover:text-foreground transition-colors">
                   {t.nav.about}
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -45,19 +45,19 @@ export function Footer() {
             <h4 className="font-semibold">Právne</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
-                <a href="#" className="hover:text-foreground transition-colors">
+                <Link to="/privacy" className="hover:text-foreground transition-colors">
                   Zásady ochrany osobných údajov
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-foreground transition-colors">
+                <Link to="/terms" className="hover:text-foreground transition-colors">
                   Obchodné podmienky
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-foreground transition-colors">
+                <Link to="/cookies" className="hover:text-foreground transition-colors">
                   {t.cookie.policy}
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

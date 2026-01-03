@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowRight, BookOpen, Clock, Lock, Play, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, BookOpen, Lock, Play, LogIn } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCourseWithModulesAndLessons } from '@/hooks/useCourseData';
@@ -11,6 +12,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   Accordion,
   AccordionContent,
@@ -25,6 +33,9 @@ export default function CourseDetailPage() {
   const { user } = useAuth();
   const { data, isLoading } = useCourseWithModulesAndLessons(courseSlug || '');
   const { data: progressData } = useCourseProgress(courseSlug || '');
+  
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [targetLessonPath, setTargetLessonPath] = useState('');
 
   if (isLoading) {
     return (
@@ -55,14 +66,25 @@ export default function CourseDetailPage() {
   const { course, modules, totalLessons } = data;
 
   const handleStartCourse = () => {
+    const targetPath = progressData?.nextLesson
+      ? `/learn/${courseSlug}/${progressData.nextLesson.moduleOrder}/${progressData.nextLesson.lessonOrder}`
+      : `/learn/${courseSlug}/1/1`;
+    
     if (user) {
-      if (progressData?.nextLesson) {
-        navigate(`/learn/${courseSlug}/${progressData.nextLesson.moduleOrder}/${progressData.nextLesson.lessonOrder}`);
-      } else {
-        navigate(`/learn/${courseSlug}/1/1`);
-      }
+      navigate(targetPath);
     } else {
-      navigate('/signup');
+      navigate(`/login?redirectTo=${encodeURIComponent(targetPath)}`);
+    }
+  };
+
+  const handleLessonClick = (moduleOrder: number, lessonOrder: number) => {
+    const targetPath = `/learn/${courseSlug}/${moduleOrder}/${lessonOrder}`;
+    
+    if (user) {
+      navigate(targetPath);
+    } else {
+      setTargetLessonPath(targetPath);
+      setShowLoginDialog(true);
     }
   };
 
@@ -169,13 +191,7 @@ export default function CourseDetailPage() {
                         {module.lessons.map((lesson) => (
                           <li key={lesson.id}>
                             <button
-                              onClick={() => {
-                                if (user) {
-                                  navigate(`/learn/${courseSlug}/${module.module_order}/${lesson.lesson_order}`);
-                                } else {
-                                  navigate('/signup');
-                                }
-                              }}
+                              onClick={() => handleLessonClick(module.module_order, lesson.lesson_order)}
                               className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-secondary/50 transition-colors text-left"
                             >
                               <Play className="h-4 w-4 text-muted-foreground" />
@@ -214,6 +230,43 @@ export default function CourseDetailPage() {
       </main>
 
       <Footer />
+
+      {/* Login Prompt Dialog */}
+      <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <LogIn className="h-5 w-5" />
+              Pre pokračovanie sa prihláste
+            </DialogTitle>
+            <DialogDescription>
+              Pre prístup k lekciám sa musíte prihlásiť alebo vytvoriť účet.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col sm:flex-row gap-3 mt-4">
+            <Button 
+              variant="gradient" 
+              className="flex-1"
+              onClick={() => {
+                setShowLoginDialog(false);
+                navigate(`/login?redirectTo=${encodeURIComponent(targetLessonPath)}`);
+              }}
+            >
+              Prihlásiť sa
+            </Button>
+            <Button 
+              variant="outline" 
+              className="flex-1"
+              onClick={() => {
+                setShowLoginDialog(false);
+                navigate(`/register?redirectTo=${encodeURIComponent(targetLessonPath)}`);
+              }}
+            >
+              Registrovať sa
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

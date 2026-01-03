@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sun, Moon, Globe, Cookie, Trash2, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -30,18 +30,13 @@ export default function ProfilePage() {
   const navigate = useNavigate();
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme } = useTheme();
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const { trackEvent } = useAnalytics();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/login');
-    }
-  }, [user, authLoading, navigate]);
-
-  if (authLoading || !user) {
+  // Auth is handled by ProtectedRoute wrapper
+  if (!user) {
     return null;
   }
 
