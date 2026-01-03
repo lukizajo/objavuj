@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Play, Pause, Check, Home, BookOpen } from 'lucide-react';
 import DOMPurify from 'dompurify';
@@ -17,50 +17,73 @@ import { Badge } from '@/components/ui/badge';
 import { ProgressBar } from '@/components/ui/progress-bar';
 
 export default function LessonPage() {
+  // === ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP ===
+  
+  // Router hooks
   const { courseSlug, moduleOrder, lessonOrder } = useParams();
   const navigate = useNavigate();
+  
+  // Context hooks
   const { t } = useLanguage();
   const { user } = useAuth();
   const { trackEvent } = useAnalytics();
+  
+  // Data fetching hooks
   const updateProgress = useUpdateProgress();
-
-  const { data, isLoading } = useLesson(
+  const { data, isLoading, error } = useLesson(
     courseSlug || '',
     parseInt(moduleOrder || '1'),
     parseInt(lessonOrder || '1')
   );
-  const { data: progress } = useLessonProgress(data?.lesson?.id);
-
+  
+  // Get lesson ID safely for progress hook
+  const lessonId = data?.lesson?.id;
+  const { data: progress } = useLessonProgress(lessonId);
+  
+  // State hooks
   const [taskAnswer, setTaskAnswer] = useState('');
   const [taskSaved, setTaskSaved] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  useEffect(() => {
-    if (data?.lesson?.id && user) {
-      trackEvent('lesson_open', window.location.pathname, { lessonId: data.lesson.id });
-      if (!progress || progress.status === 'not_started') {
-        updateProgress.mutate({ lessonId: data.lesson.id, status: 'in_progress' });
+  // Debug log (temporary)
+  console.log('[LessonPage Debug]', { 
+    courseSlug, 
+    moduleOrder, 
+    lessonOrder, 
+    lessonId, 
+    isLoading, 
+    hasLesson: !!data?.lesson,
+    hasData: !!data,
+    error: error?.message 
+  });
+
+  // Memoized values - MUST be called unconditionally
+  const sanitizedContent = useMemo(() => {
+    const content = data?.lesson?.content_md ?? '';
+    return DOMPurify.sanitize(
+      content.replace(/\n/g, '<br/>'),
+      { 
+        ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'b', 'i', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'a', 'code', 'pre', 'blockquote', 'span'],
+        ALLOWED_ATTR: ['href', 'target', 'rel', 'class']
       }
-    }
-  }, [data?.lesson?.id, user]);
+    );
+  }, [data?.lesson?.content_md]);
 
-  useEffect(() => {
-    if (data?.task && user) {
-      supabase
-        .from('task_answers')
-        .select('answer_text')
-        .eq('user_id', user.id)
-        .eq('task_id', data.task.id)
-        .maybeSingle()
-        .then(({ data: answer }) => {
-          if (answer?.answer_text) setTaskAnswer(answer.answer_text);
-        });
-    }
-  }, [data?.task, user]);
+  // Derived values - safe access with fallbacks
+  const course = data?.course ?? null;
+  const module = data?.module ?? null;
+  const lesson = data?.lesson ?? null;
+  const prevLesson = data?.prevLesson ?? null;
+  const nextLesson = data?.nextLesson ?? null;
+  const task = data?.task ?? null;
+  const totalLessons = data?.totalLessons ?? 0;
+  const currentLessonIndex = data?.currentLessonIndex ?? 0;
+  const isCompleted = progress?.status === 'done';
 
-  const handlePlayPause = () => {
+  // Callbacks - defined unconditionally
+  const handlePlayPause = useCallback(() => {
     if (audioRef.current) {
       if (isPlaying) {
         audioRef.current.pause();
@@ -70,38 +93,65 @@ export default function LessonPage() {
       }
       setIsPlaying(!isPlaying);
     }
-  };
+  }, [isPlaying, trackEvent]);
 
-  const handleSpeedChange = () => {
+  const handleSpeedChange = useCallback(() => {
     const speeds = [0.75, 1, 1.25, 1.5];
     const currentIndex = speeds.indexOf(playbackSpeed);
     const newSpeed = speeds[(currentIndex + 1) % speeds.length];
     setPlaybackSpeed(newSpeed);
     if (audioRef.current) audioRef.current.playbackRate = newSpeed;
-  };
+  }, [playbackSpeed]);
 
-  const handleSaveTask = async () => {
-    if (!user || !data?.task) return;
+  const handleSaveTask = useCallback(async () => {
+    if (!user || !task) return;
     await supabase.from('task_answers').upsert([{
       user_id: user.id,
-      task_id: data.task.id,
+      task_id: task.id,
       answer_text: taskAnswer,
     }], { onConflict: 'user_id,task_id' });
     setTaskSaved(true);
     trackEvent('task_save', window.location.pathname);
     setTimeout(() => setTaskSaved(false), 2000);
-  };
+  }, [user, task, taskAnswer, trackEvent]);
 
-  const handleComplete = () => {
-    if (!user || !data?.lesson) return;
-    updateProgress.mutate({ lessonId: data.lesson.id, status: 'done' });
+  const handleComplete = useCallback(() => {
+    if (!user || !lessonId) return;
+    updateProgress.mutate({ lessonId, status: 'done' });
     trackEvent('lesson_complete', window.location.pathname);
-  };
+  }, [user, lessonId, updateProgress, trackEvent]);
 
-  const navigateToLesson = (moduleOrder: number, lessonOrder: number) => {
-    navigate(`/learn/${courseSlug}/${moduleOrder}/${lessonOrder}`);
-  };
+  const navigateToLesson = useCallback((modOrder: number, lessOrder: number) => {
+    navigate(`/learn/${courseSlug}/${modOrder}/${lessOrder}`);
+  }, [navigate, courseSlug]);
 
+  // Effects - called unconditionally
+  useEffect(() => {
+    if (lessonId && user) {
+      trackEvent('lesson_open', window.location.pathname, { lessonId });
+      if (!progress || progress.status === 'not_started') {
+        updateProgress.mutate({ lessonId, status: 'in_progress' });
+      }
+    }
+  }, [lessonId, user, progress, trackEvent, updateProgress]);
+
+  useEffect(() => {
+    if (task && user) {
+      supabase
+        .from('task_answers')
+        .select('answer_text')
+        .eq('user_id', user.id)
+        .eq('task_id', task.id)
+        .maybeSingle()
+        .then(({ data: answer }) => {
+          if (answer?.answer_text) setTaskAnswer(answer.answer_text);
+        });
+    }
+  }, [task, user]);
+
+  // === CONDITIONAL RENDERING HAPPENS AFTER ALL HOOKS ===
+
+  // Loading state
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -131,7 +181,45 @@ export default function LessonPage() {
     );
   }
 
-  if (!data?.lesson || !data?.course || !data?.module) {
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="pt-24 pb-20 flex items-center justify-center px-4">
+          <GlassCard className="max-w-md w-full text-center">
+            <div className="flex justify-center mb-4">
+              <div className="h-16 w-16 rounded-full bg-destructive/20 flex items-center justify-center">
+                <BookOpen className="h-8 w-8 text-destructive" />
+              </div>
+            </div>
+            <h2 className="text-2xl font-display font-bold mb-2">
+              Chyba pri načítaní
+            </h2>
+            <p className="text-muted-foreground mb-4">
+              Nepodarilo sa načítať lekciu.
+            </p>
+            <pre className="text-xs bg-secondary/50 p-3 rounded-lg mb-6 overflow-auto max-h-24 text-left text-muted-foreground">
+              {error.message}
+            </pre>
+            <div className="flex gap-3 justify-center">
+              <Button variant="outline" onClick={() => navigate(-1)}>
+                <ChevronLeft className="h-4 w-4 mr-2" />
+                Späť
+              </Button>
+              <Button onClick={() => navigate('/kurzy')}>
+                <Home className="h-4 w-4 mr-2" />
+                Späť na kurzy
+              </Button>
+            </div>
+          </GlassCard>
+        </main>
+      </div>
+    );
+  }
+
+  // Not found state
+  if (!lesson || !course || !module) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -164,20 +252,7 @@ export default function LessonPage() {
     );
   }
 
-  const { course, module, lesson, prevLesson, nextLesson, task, totalLessons, currentLessonIndex } = data;
-  const isCompleted = progress?.status === 'done';
-
-  // Sanitize lesson content to prevent XSS attacks
-  const sanitizedContent = useMemo(() => {
-    return DOMPurify.sanitize(
-      lesson.content_md?.replace(/\n/g, '<br/>') || '',
-      { 
-        ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'b', 'i', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'a', 'code', 'pre', 'blockquote', 'span'],
-        ALLOWED_ATTR: ['href', 'target', 'rel', 'class']
-      }
-    );
-  }, [lesson.content_md]);
-
+  // Main render - lesson found
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -226,7 +301,11 @@ export default function LessonPage() {
 
           {/* Content */}
           <GlassCard className="mb-8 prose prose-invert max-w-none">
-            <div dangerouslySetInnerHTML={{ __html: sanitizedContent }} />
+            {sanitizedContent ? (
+              <div dangerouslySetInnerHTML={{ __html: sanitizedContent }} />
+            ) : (
+              <p className="text-muted-foreground italic">Obsah lekcie nie je k dispozícii.</p>
+            )}
           </GlassCard>
 
           {/* Examples */}
