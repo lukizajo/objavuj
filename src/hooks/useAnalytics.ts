@@ -9,9 +9,14 @@ export function useAnalytics() {
     page?: string,
     metadata?: Record<string, string | number | boolean>
   ) => {
+    // Only track events for authenticated users (required by RLS policy)
+    if (!user?.id) {
+      return;
+    }
+
     try {
       await supabase.from('avatar_events').insert([{
-        user_id: user?.id || null,
+        user_id: user.id,
         event_type: eventType,
         page: page || window.location.pathname,
         metadata_json: metadata || null,
