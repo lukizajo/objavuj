@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
+import { getSafeRedirectUrl } from '@/lib/redirect-utils';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -25,7 +26,8 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const redirectTo = searchParams.get('redirectTo') || '/dashboard';
+  // Use safe redirect URL to prevent open redirect attacks
+  const redirectTo = getSafeRedirectUrl(searchParams.get('redirectTo'));
 
   // Redirect if already logged in
   useEffect(() => {
