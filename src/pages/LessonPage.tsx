@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Play, Pause, Check, Home } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play, Pause, Check, Home, BookOpen } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -106,20 +106,59 @@ export default function LessonPage() {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <main className="pt-24 pb-20 container mx-auto px-4">
-          <Skeleton className="h-8 w-64 mb-4" />
-          <Skeleton className="h-96 w-full" />
+        <main className="pt-24 pb-20 container mx-auto px-4 max-w-4xl">
+          {/* Breadcrumb skeleton */}
+          <div className="flex items-center gap-2 mb-6">
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-4 w-4" />
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-4 w-4" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+          {/* Title skeleton */}
+          <Skeleton className="h-10 w-3/4 mb-8" />
+          {/* Content skeleton */}
+          <div className="space-y-4">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+            <Skeleton className="h-4 w-4/5" />
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+          </div>
         </main>
       </div>
     );
   }
 
-  if (!data?.lesson) {
+  if (!data?.lesson || !data?.course || !data?.module) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <main className="pt-24 pb-20 flex items-center justify-center">
-          <p className="text-muted-foreground">Lekcia nebola nájdená</p>
+        <main className="pt-24 pb-20 flex items-center justify-center px-4">
+          <GlassCard className="max-w-md w-full text-center">
+            <div className="flex justify-center mb-4">
+              <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
+                <BookOpen className="h-8 w-8 text-muted-foreground" />
+              </div>
+            </div>
+            <h2 className="text-2xl font-display font-bold mb-2">
+              Lekcia nebola nájdená
+            </h2>
+            <p className="text-muted-foreground mb-6">
+              Táto lekcia neexistuje alebo bola odstránená.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button variant="outline" onClick={() => navigate(-1)}>
+                <ChevronLeft className="h-4 w-4 mr-2" />
+                Späť
+              </Button>
+              <Button onClick={() => navigate('/kurzy')}>
+                <Home className="h-4 w-4 mr-2" />
+                Späť na kurzy
+              </Button>
+            </div>
+          </GlassCard>
         </main>
       </div>
     );
@@ -165,13 +204,13 @@ export default function LessonPage() {
         <div className="container mx-auto px-4 max-w-4xl">
           {/* Breadcrumbs */}
           <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6 flex-wrap">
-            <Link to="/courses" className="hover:text-foreground">Kurzy</Link>
-            <ChevronRight className="h-4 w-4" />
-            <Link to={`/courses/${courseSlug}`} className="hover:text-foreground">{course.title}</Link>
-            <ChevronRight className="h-4 w-4" />
-            <span>{module.title}</span>
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground">{lesson.title}</span>
+            <Link to="/kurzy" className="hover:text-foreground transition-colors">Kurzy</Link>
+            <ChevronRight className="h-4 w-4 flex-shrink-0" />
+            <Link to={`/kurzy/${courseSlug}`} className="hover:text-foreground transition-colors">{course.title}</Link>
+            <ChevronRight className="h-4 w-4 flex-shrink-0" />
+            <span className="truncate max-w-[150px]" title={module.title}>{module.title}</span>
+            <ChevronRight className="h-4 w-4 flex-shrink-0" />
+            <span className="text-foreground truncate max-w-[150px]" title={lesson.title}>{lesson.title}</span>
           </nav>
 
           {/* Header */}
