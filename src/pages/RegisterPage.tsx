@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, AlertCircle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,14 +12,16 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { t } = useLanguage();
-  const { signIn, user, loading: authLoading } = useAuth();
+  const { signUp, user, loading: authLoading } = useAuth();
   
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -35,19 +37,34 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (password !== confirmPassword) {
+      setError(t.auth.passwordMismatch);
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Heslo musí mať minimálne 6 znakov');
+      return;
+    }
+
     setLoading(true);
 
-    const { error: signInError } = await signIn(email, password);
+    const { error: signUpError } = await signUp(email, password, name);
     
-    if (signInError) {
-      setError(signInError.message);
+    if (signUpError) {
+      if (signUpError.message.includes('already registered')) {
+        setError(t.auth.emailExists);
+      } else {
+        setError(signUpError.message);
+      }
       setLoading(false);
     } else {
       navigate(redirectTo);
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignUp = async () => {
     setLoading(true);
     setError('');
     
@@ -81,12 +98,12 @@ export default function LoginPage() {
           <GlassCard padding="lg">
             <div className="text-center mb-8">
               <h1 className="text-3xl font-display font-bold mb-2">
-                {t.auth.login}
+                {t.auth.signup}
               </h1>
               <p className="text-muted-foreground">
-                {t.auth.noAccount}{' '}
-                <Link to={`/register${redirectTo !== '/dashboard' ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''}`} className="text-primary hover:underline">
-                  {t.auth.signupHere}
+                {t.auth.hasAccount}{' '}
+                <Link to={`/login${redirectTo !== '/dashboard' ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''}`} className="text-primary hover:underline">
+                  {t.auth.loginHere}
                 </Link>
               </p>
             </div>
@@ -98,13 +115,13 @@ export default function LoginPage() {
               </Alert>
             )}
 
-            {/* Google Sign In */}
+            {/* Google Sign Up */}
             <Button
               type="button"
               variant="outline"
               className="w-full mb-4"
               size="lg"
-              onClick={handleGoogleSignIn}
+              onClick={handleGoogleSignUp}
               disabled={loading}
             >
               <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
@@ -125,7 +142,7 @@ export default function LoginPage() {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              Pokračovať cez Google
+              Registrovať cez Google
             </Button>
 
             <div className="relative my-6">
@@ -136,6 +153,21 @@ export default function LoginPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">{t.auth.name}</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Vaše meno"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="email">{t.auth.email}</Label>
                 <div className="relative">
@@ -168,6 +200,22 @@ export default function LoginPage() {
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">{t.auth.confirmPassword}</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="pl-10"
+                    required
+                  />
+                </div>
+              </div>
+
               <Button 
                 type="submit" 
                 className="w-full" 
@@ -175,7 +223,7 @@ export default function LoginPage() {
                 variant="gradient"
                 disabled={loading}
               >
-                {loading ? t.common.loading : t.auth.login}
+                {loading ? t.common.loading : t.auth.signup}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </form>

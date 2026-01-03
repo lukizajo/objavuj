@@ -27,20 +27,11 @@ export function Navbar() {
     navigate('/');
   };
 
-  const scrollToFaq = () => {
-    if (location.pathname !== '/') {
-      navigate('/#faq');
-    } else {
-      document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });
-    }
-    setIsOpen(false);
-  };
-
   const navLinks = [
-    { href: '/courses', label: t.nav.courses },
-    { href: '#', label: t.nav.podcast, external: true },
-    { href: '#', label: t.nav.about },
-    { onClick: scrollToFaq, label: t.nav.faq },
+    { href: '/kurzy', label: t.nav.courses },
+    { href: '/podcast', label: t.nav.podcast },
+    { href: '/o-nas', label: t.nav.about },
+    { href: '/faq', label: t.nav.faq },
   ];
 
   return (
@@ -57,23 +48,13 @@ export function Navbar() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
             {navLinks.map((link, index) => (
-              link.onClick ? (
-                <button
-                  key={index}
-                  onClick={link.onClick}
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {link.label}
-                </button>
-              ) : (
-                <Link
-                  key={index}
-                  to={link.href}
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {link.label}
-                </Link>
-              )
+              <Link
+                key={index}
+                to={link.href}
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {link.label}
+              </Link>
             ))}
           </div>
 
@@ -145,7 +126,7 @@ export function Navbar() {
                 <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
                   {t.nav.login}
                 </Button>
-                <Button size="sm" onClick={() => navigate('/signup')}>
+                <Button size="sm" onClick={() => navigate('/register')}>
                   {t.nav.signup}
                 </Button>
               </div>
@@ -172,24 +153,14 @@ export function Navbar() {
         >
           <div className="flex flex-col gap-2 pt-2">
             {navLinks.map((link, index) => (
-              link.onClick ? (
-                <button
-                  key={index}
-                  onClick={link.onClick}
-                  className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors text-left"
-                >
-                  {link.label}
-                </button>
-              ) : (
-                <Link
-                  key={index}
-                  to={link.href}
-                  onClick={() => setIsOpen(false)}
-                  className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {link.label}
-                </Link>
-              )
+              <Link
+                key={index}
+                to={link.href}
+                onClick={() => setIsOpen(false)}
+                className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {link.label}
+              </Link>
             ))}
             
             <div className="flex items-center gap-2 px-3 py-2">
@@ -227,7 +198,7 @@ export function Navbar() {
                 <Button variant="outline" size="sm" onClick={() => { navigate('/login'); setIsOpen(false); }}>
                   {t.nav.login}
                 </Button>
-                <Button size="sm" onClick={() => { navigate('/signup'); setIsOpen(false); }}>
+                <Button size="sm" onClick={() => { navigate('/register'); setIsOpen(false); }}>
                   {t.nav.signup}
                 </Button>
               </div>

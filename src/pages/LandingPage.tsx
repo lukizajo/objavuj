@@ -28,7 +28,7 @@ export default function LandingPage() {
     if (user) {
       navigate('/dashboard');
     } else {
-      navigate('/signup');
+      navigate('/register');
     }
   };
 
@@ -98,7 +98,7 @@ export default function LandingPage() {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               )}
-              <Button size="xl" variant="outline" onClick={() => navigate('/courses')}>
+              <Button size="xl" variant="outline" onClick={() => navigate('/kurzy')}>
                 {t.hero.ctaSecondary}
               </Button>
             </div>
@@ -302,7 +302,7 @@ export default function LandingPage() {
               </Button>
             )
           ) : (
-            <Button size="xl" variant="gradient" onClick={() => navigate('/signup')}>
+            <Button size="xl" variant="gradient" onClick={() => navigate('/register')}>
               {t.finalCta.ctaStart}
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
