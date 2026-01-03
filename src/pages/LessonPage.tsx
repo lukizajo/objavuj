@@ -1,6 +1,7 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Play, Pause, Check, Home } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLesson } from '@/hooks/useCourseData';
@@ -127,6 +128,17 @@ export default function LessonPage() {
   const { course, module, lesson, prevLesson, nextLesson, task, totalLessons, currentLessonIndex } = data;
   const isCompleted = progress?.status === 'done';
 
+  // Sanitize lesson content to prevent XSS attacks
+  const sanitizedContent = useMemo(() => {
+    return DOMPurify.sanitize(
+      lesson.content_md?.replace(/\n/g, '<br/>') || '',
+      { 
+        ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'b', 'i', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'a', 'code', 'pre', 'blockquote', 'span'],
+        ALLOWED_ATTR: ['href', 'target', 'rel', 'class']
+      }
+    );
+  }, [lesson.content_md]);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -175,7 +187,7 @@ export default function LessonPage() {
 
           {/* Content */}
           <GlassCard className="mb-8 prose prose-invert max-w-none">
-            <div dangerouslySetInnerHTML={{ __html: lesson.content_md?.replace(/\n/g, '<br/>') || '' }} />
+            <div dangerouslySetInnerHTML={{ __html: sanitizedContent }} />
           </GlassCard>
 
           {/* Examples */}
