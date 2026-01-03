@@ -312,7 +312,7 @@ export default function LessonPage() {
                 <div className="mb-6">
                   <AudioPlayer 
                     audioUrl={lesson.audio_path}
-                    transcript={null}
+                    transcript={lesson.transcript_md ?? null}
                     initialTime={progress?.last_position_sec ?? 0}
                   />
                 </div>

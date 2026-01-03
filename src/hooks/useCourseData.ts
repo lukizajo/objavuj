@@ -27,6 +27,7 @@ export interface Lesson {
   lesson_order: number;
   content_md: string | null;
   examples_md: string | null;
+  transcript_md: string | null;
   audio_path: string | null;
   duration_sec: number | null;
   is_free: boolean;

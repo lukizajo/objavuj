@@ -86,6 +86,7 @@ export type Database = {
           lesson_order: number
           module_id: string
           title: string
+          transcript_md: string | null
         }
         Insert: {
           audio_path?: string | null
@@ -98,6 +99,7 @@ export type Database = {
           lesson_order: number
           module_id: string
           title: string
+          transcript_md?: string | null
         }
         Update: {
           audio_path?: string | null
@@ -110,6 +112,7 @@ export type Database = {
           lesson_order?: number
           module_id?: string
           title?: string
+          transcript_md?: string | null
         }
         Relationships: [
           {

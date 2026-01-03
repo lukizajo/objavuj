@@ -59,6 +59,23 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- Supabase (backend)
+
+## Environment Variables
+
+When deploying to your own Supabase instance (e.g., on Vercel), set the following environment variables:
+
+| Variable | Description |
+|----------|-------------|
+| `VITE_SUPABASE_URL` | Your Supabase project URL (e.g., `https://xxxxx.supabase.co`) |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Your Supabase anon/public key |
+
+### Setting up on Vercel
+
+1. Go to your Vercel project dashboard
+2. Navigate to **Settings** → **Environment Variables**
+3. Add the variables above with your Supabase project values
+4. Redeploy your application
 
 ## How can I deploy this project?
 
