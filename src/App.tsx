@@ -24,6 +24,7 @@ import PrivacyPage from "./pages/PrivacyPage";
 import TermsPage from "./pages/TermsPage";
 import CookiesPage from "./pages/CookiesPage";
 import NotFound from "./pages/NotFound";
+import DebugPage from "./pages/DebugPage";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,8 @@ const App = () => (
                   <Route path="/privacy" element={<PrivacyPage />} />
                   <Route path="/terms" element={<TermsPage />} />
                   <Route path="/cookies" element={<CookiesPage />} />
+                  <Route path="/debug" element={<DebugPage />} />
+                  <Route path="/debug/:lessonId" element={<DebugPage />} />
                   
                   {/* Protected routes */}
                   <Route path="/dashboard" element={

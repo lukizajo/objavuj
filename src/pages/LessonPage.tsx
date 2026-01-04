@@ -77,6 +77,11 @@ export default function LessonPage() {
   // Check if we have tiles (new system) or legacy content
   const hasTiles = tiles.length > 0;
   
+  // Log warning if using legacy content (no debug banner in UI)
+  if (!hasTiles && lesson?.id) {
+    console.warn(`Lesson ${lesson.id} has no tiles - using legacy content fallback`);
+  }
+  
   // Gating: can we proceed to next lesson?
   const canProceedToNext = gatingData?.canProceed ?? true;
 
@@ -337,14 +342,8 @@ export default function LessonPage() {
                   onTileComplete={handleTileComplete}
                 />
               ) : (
-                /* Debug fallback + Legacy content rendering */
+                /* Legacy content rendering - no debug banner */
                 <>
-                  {/* Debug warning when no tiles found */}
-                  <div className="mb-6 p-4 rounded-lg border border-warning/50 bg-warning/10">
-                    <p className="text-warning text-sm font-medium">
-                      ⚠️ No lesson tiles found for this lesson. Falling back to legacy content.
-                    </p>
-                  </div>
                   {/* Audio Player */}
                   {lesson.audio_path && (
                     <div className="mb-6">
