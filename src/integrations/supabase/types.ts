@@ -173,7 +173,6 @@ export type Database = {
           course_id: string
           created_at: string
           id: string
-          is_free: boolean
           module_order: number
           title: string
         }
@@ -181,7 +180,6 @@ export type Database = {
           course_id: string
           created_at?: string
           id?: string
-          is_free?: boolean
           module_order: number
           title: string
         }
@@ -189,7 +187,6 @@ export type Database = {
           course_id?: string
           created_at?: string
           id?: string
-          is_free?: boolean
           module_order?: number
           title?: string
         }
