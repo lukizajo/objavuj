@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface Course {
   id: string;
@@ -48,13 +49,22 @@ export interface LessonTile {
 }
 
 export function useCourses() {
+  const { user } = useAuth();
+  
   return useQuery({
-    queryKey: ['courses'],
+    queryKey: ['courses', !!user],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('courses')
         .select('*')
         .order('created_at', { ascending: true });
+      
+      // Anonymous users only see free courses
+      if (!user) {
+        query = query.eq('is_free', true);
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       return data as Course[];
@@ -63,14 +73,22 @@ export function useCourses() {
 }
 
 export function useCourse(slug: string) {
+  const { user } = useAuth();
+  
   return useQuery({
-    queryKey: ['course', slug],
+    queryKey: ['course', slug, !!user],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('courses')
         .select('*')
-        .eq('slug', slug)
-        .maybeSingle();
+        .eq('slug', slug);
+      
+      // Anonymous users only see free courses
+      if (!user) {
+        query = query.eq('is_free', true);
+      }
+      
+      const { data, error } = await query.maybeSingle();
       
       if (error) throw error;
       return data as Course | null;
@@ -80,16 +98,25 @@ export function useCourse(slug: string) {
 }
 
 export function useModules(courseId: string | undefined) {
+  const { user } = useAuth();
+  
   return useQuery({
-    queryKey: ['modules', courseId],
+    queryKey: ['modules', courseId, !!user],
     queryFn: async () => {
       if (!courseId) return [];
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('modules')
         .select('*')
         .eq('course_id', courseId)
         .order('module_order', { ascending: true });
+      
+      // Anonymous users only see free modules
+      if (!user) {
+        query = query.eq('is_free', true);
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       return data as Module[];
@@ -99,16 +126,25 @@ export function useModules(courseId: string | undefined) {
 }
 
 export function useLessons(moduleId: string | undefined) {
+  const { user } = useAuth();
+  
   return useQuery({
-    queryKey: ['lessons', moduleId],
+    queryKey: ['lessons', moduleId, !!user],
     queryFn: async () => {
       if (!moduleId) return [];
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('lessons')
         .select('*')
         .eq('module_id', moduleId)
         .order('lesson_order', { ascending: true });
+      
+      // Anonymous users only see free lessons
+      if (!user) {
+        query = query.eq('is_free', true);
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       return data as Lesson[];
@@ -118,36 +154,55 @@ export function useLessons(moduleId: string | undefined) {
 }
 
 export function useCourseWithModulesAndLessons(slug: string) {
+  const { user } = useAuth();
+  
   return useQuery({
-    queryKey: ['courseComplete', slug],
+    queryKey: ['courseComplete', slug, !!user],
     queryFn: async () => {
       // Get course
-      const { data: course, error: courseError } = await supabase
+      let courseQuery = supabase
         .from('courses')
         .select('*')
-        .eq('slug', slug)
-        .maybeSingle();
+        .eq('slug', slug);
+      
+      if (!user) {
+        courseQuery = courseQuery.eq('is_free', true);
+      }
+      
+      const { data: course, error: courseError } = await courseQuery.maybeSingle();
       
       if (courseError) throw courseError;
       if (!course) return null;
       
       // Get modules
-      const { data: modules, error: modulesError } = await supabase
+      let modulesQuery = supabase
         .from('modules')
         .select('*')
         .eq('course_id', course.id)
         .order('module_order', { ascending: true });
+      
+      if (!user) {
+        modulesQuery = modulesQuery.eq('is_free', true);
+      }
+      
+      const { data: modules, error: modulesError } = await modulesQuery;
       
       if (modulesError) throw modulesError;
       
       // Get all lessons for this course's modules
       const moduleIds = modules?.map(m => m.id) || [];
       
-      const { data: lessons, error: lessonsError } = await supabase
+      let lessonsQuery = supabase
         .from('lessons')
         .select('*')
         .in('module_id', moduleIds)
         .order('lesson_order', { ascending: true });
+      
+      if (!user) {
+        lessonsQuery = lessonsQuery.eq('is_free', true);
+      }
+      
+      const { data: lessons, error: lessonsError } = await lessonsQuery;
       
       if (lessonsError) throw lessonsError;
       
