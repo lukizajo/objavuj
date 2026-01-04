@@ -337,8 +337,14 @@ export default function LessonPage() {
                   onTileComplete={handleTileComplete}
                 />
               ) : (
-                /* Legacy content rendering */
+                /* Debug fallback + Legacy content rendering */
                 <>
+                  {/* Debug warning when no tiles found */}
+                  <div className="mb-6 p-4 rounded-lg border border-warning/50 bg-warning/10">
+                    <p className="text-warning text-sm font-medium">
+                      ⚠️ No lesson tiles found for this lesson. Falling back to legacy content.
+                    </p>
+                  </div>
                   {/* Audio Player */}
                   {lesson.audio_path && (
                     <div className="mb-6">
