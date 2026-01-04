@@ -49,48 +49,37 @@ export interface LessonTile {
 }
 
 export function useCourses() {
-  const { user } = useAuth();
-  
   return useQuery({
-    queryKey: ['courses', !!user],
+    queryKey: ['courses'],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from('courses')
         .select('*')
         .order('created_at', { ascending: true });
       
-      // Anonymous users only see free courses
-      if (!user) {
-        query = query.eq('is_free', true);
+      if (error) {
+        console.error('Courses fetch error:', error);
+        throw error;
       }
-      
-      const { data, error } = await query;
-      
-      if (error) throw error;
       return data as Course[];
     },
   });
 }
 
 export function useCourse(slug: string) {
-  const { user } = useAuth();
-  
   return useQuery({
-    queryKey: ['course', slug, !!user],
+    queryKey: ['course', slug],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from('courses')
         .select('*')
-        .eq('slug', slug);
+        .eq('slug', slug)
+        .maybeSingle();
       
-      // Anonymous users only see free courses
-      if (!user) {
-        query = query.eq('is_free', true);
+      if (error) {
+        console.error('Course fetch error:', error);
+        throw error;
       }
-      
-      const { data, error } = await query.maybeSingle();
-      
-      if (error) throw error;
       return data as Course | null;
     },
     enabled: !!slug,
@@ -159,19 +148,17 @@ export function useCourseWithModulesAndLessons(slug: string) {
   return useQuery({
     queryKey: ['courseComplete', slug, !!user],
     queryFn: async () => {
-      // Get course
-      let courseQuery = supabase
+      // Get course (no is_free filter on courses)
+      const { data: course, error: courseError } = await supabase
         .from('courses')
         .select('*')
-        .eq('slug', slug);
+        .eq('slug', slug)
+        .maybeSingle();
       
-      if (!user) {
-        courseQuery = courseQuery.eq('is_free', true);
+      if (courseError) {
+        console.error('Course fetch error:', courseError);
+        throw courseError;
       }
-      
-      const { data: course, error: courseError } = await courseQuery.maybeSingle();
-      
-      if (courseError) throw courseError;
       if (!course) return null;
       
       // Get modules
