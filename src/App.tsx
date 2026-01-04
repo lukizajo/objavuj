@@ -25,7 +25,7 @@ import TermsPage from "./pages/TermsPage";
 import CookiesPage from "./pages/CookiesPage";
 import NotFound from "./pages/NotFound";
 import DebugPage from "./pages/DebugPage";
-
+import AuthCallbackPage from "./pages/AuthCallbackPage";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -43,6 +43,7 @@ const App = () => (
                   <Route path="/" element={<LandingPage />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
+                  <Route path="/auth/callback" element={<AuthCallbackPage />} />
                   <Route path="/kurzy" element={<CoursesPage />} />
                   <Route path="/kurzy/:courseSlug" element={<CourseDetailPage />} />
                   <Route path="/podcast" element={<PodcastPage />} />
