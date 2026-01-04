@@ -1,14 +1,10 @@
-// Supabase client - uses environment variables
+// Supabase client - connects to external Supabase project
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// Use environment variables for Supabase configuration
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-  throw new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY environment variables');
-}
+// External Supabase project credentials (anon key is public/safe to expose)
+const SUPABASE_URL = "https://sddgbbefukcqcxwywdmk.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkZGdiYmVmdWtjcWN4d3l3ZG1rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc0NjE5NzAsImV4cCI6MjA4MzAzNzk3MH0.wHsN3BOIDIp00A1lM7e40dZ-uWOfKdZPHv8gFDsPVUY";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
