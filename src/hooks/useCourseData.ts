@@ -120,11 +120,7 @@ export function useLessons(moduleId: string | undefined) {
         .eq('module_id', moduleId)
         .order('lesson_order', { ascending: true });
       
-      // Anonymous users only see free lessons
-      if (!user) {
-        query = query.eq('is_free', true);
-      }
-      
+      // Fetch all lessons - UI will handle locking non-free ones for anonymous users
       const { data, error } = await query;
       
       if (error) throw error;
@@ -171,10 +167,7 @@ export function useCourseWithModulesAndLessons(slug: string) {
         .in('module_id', moduleIds)
         .order('lesson_order', { ascending: true });
       
-      if (!user) {
-        lessonsQuery = lessonsQuery.eq('is_free', true);
-      }
-      
+      // Fetch all lessons - UI will handle locking non-free ones for anonymous users
       const { data: lessons, error: lessonsError } = await lessonsQuery;
       
       if (lessonsError) throw lessonsError;
