@@ -74,6 +74,53 @@ export type Database = {
         }
         Relationships: []
       }
+      lesson_tiles: {
+        Row: {
+          body_json: Json | null
+          body_md: string | null
+          created_at: string
+          icon: string
+          id: string
+          is_required: boolean
+          lesson_id: string
+          position: number
+          title: string
+          type: string
+        }
+        Insert: {
+          body_json?: Json | null
+          body_md?: string | null
+          created_at?: string
+          icon?: string
+          id?: string
+          is_required?: boolean
+          lesson_id: string
+          position?: number
+          title: string
+          type: string
+        }
+        Update: {
+          body_json?: Json | null
+          body_md?: string | null
+          created_at?: string
+          icon?: string
+          id?: string
+          is_required?: boolean
+          lesson_id?: string
+          position?: number
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_tiles_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lessons: {
         Row: {
           audio_path: string | null
