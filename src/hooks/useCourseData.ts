@@ -7,7 +7,6 @@ export interface Course {
   title: string;
   slug: string;
   description: string | null;
-  is_free: boolean;
   image_url: string | null;
   created_at: string;
 }
@@ -58,7 +57,7 @@ export function useCourses() {
         .order('created_at', { ascending: true });
       
       if (error) {
-        console.error('Courses fetch error:', error);
+        console.error('Courses fetch error:', error.message, error.code, error.details);
         throw error;
       }
       return data as Course[];

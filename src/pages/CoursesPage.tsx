@@ -47,11 +47,6 @@ export default function CoursesPage() {
                   </div>
                   
                   <div className="flex items-center gap-2 mb-3">
-                    {course.is_free && (
-                      <Badge className="bg-success/20 text-success border-success/30">
-                        {t.coursePreview.freeBadge}
-                      </Badge>
-                    )}
                     <Badge variant="secondary">Pilot</Badge>
                   </div>
                   
