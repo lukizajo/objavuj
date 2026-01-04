@@ -3,10 +3,10 @@ import { ContentTile } from './ContentTile';
 import { ExampleTile } from './ExampleTile';
 import { TranscriptTile } from './TranscriptTile';
 import { EthicsTile } from './EthicsTile';
-import { AntiPatternTile } from './AntiPatternTile';
+import { WarningTile } from './WarningTile';
 import { MiniTaskTile } from './MiniTaskTile';
-import { MiniQuizTile } from './MiniQuizTile';
-import { AudioTile } from './AudioTile';
+import { MiniTestTile } from './MiniTestTile';
+import { MediaTile } from './MediaTile';
 
 interface TileRendererProps {
   tiles: LessonTileData[];
@@ -21,30 +21,31 @@ export function TileRenderer({
   initialAudioTime = 0,
   onTileComplete 
 }: TileRendererProps) {
-  // Sort tiles by position
-  const sortedTiles = [...tiles].sort((a, b) => a.position - b.position);
+  // Sort tiles by tile_order (DB column name)
+  const sortedTiles = [...tiles].sort((a, b) => a.tile_order - b.tile_order);
 
   return (
     <div className="space-y-6">
       {sortedTiles.map((tile) => {
-        switch (tile.type) {
+        // Use tile_type from DB
+        switch (tile.tile_type) {
           case 'content':
             return <ContentTile key={tile.id} tile={tile} />;
           
           case 'example':
             return <ExampleTile key={tile.id} tile={tile} />;
           
-          case 'audio':
-            return <AudioTile key={tile.id} tile={tile} initialTime={initialAudioTime} />;
-          
           case 'transcript':
             return <TranscriptTile key={tile.id} tile={tile} />;
+          
+          case 'media':
+            return <MediaTile key={tile.id} tile={tile} initialTime={initialAudioTime} />;
           
           case 'ethics':
             return <EthicsTile key={tile.id} tile={tile} />;
           
-          case 'anti_pattern':
-            return <AntiPatternTile key={tile.id} tile={tile} />;
+          case 'warning':
+            return <WarningTile key={tile.id} tile={tile} />;
           
           case 'mini_task':
             return (
@@ -56,9 +57,9 @@ export function TileRenderer({
               />
             );
           
-          case 'mini_quiz':
+          case 'mini_test':
             return (
-              <MiniQuizTile 
+              <MiniTestTile 
                 key={tile.id} 
                 tile={tile} 
                 lessonId={lessonId}
@@ -67,6 +68,7 @@ export function TileRenderer({
             );
           
           default:
+            console.warn(`Unknown tile type: ${(tile as any).tile_type}`);
             return null;
         }
       })}

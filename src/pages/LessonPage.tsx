@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Check, Home, BookOpen, Trophy, Lock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Home, BookOpen, Trophy, Lock, ShoppingCart } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLesson, useLessonGating } from '@/hooks/useCourseData';
@@ -17,6 +17,7 @@ import { LessonSidebar } from '@/components/LessonSidebar';
 import { MarkdownContent } from '@/components/MarkdownContent';
 import { AudioPlayer } from '@/components/AudioPlayer';
 import { TileRenderer } from '@/components/lesson-tiles';
+import type { LessonTileData } from '@/components/lesson-tiles';
 import { useQueryClient } from '@tanstack/react-query';
 
 export default function LessonPage() {
@@ -34,7 +35,7 @@ export default function LessonPage() {
   
   // Parse order values safely
   const moduleOrderNum = parseInt(moduleOrder || '1', 10);
-  const lessonOrderNum = parseInt(lessonOrder || '1', 10);
+  const lessonOrderNum = parseInt(lessonOrder || '0', 10);
   
   // Data fetching hooks
   const updateProgress = useUpdateProgress();
@@ -52,7 +53,7 @@ export default function LessonPage() {
   const { data: progress } = useLessonProgress(lessonId);
   
   // Get gating status
-  const requiredTiles = data?.requiredTiles ?? [];
+  const requiredTiles = (data?.requiredTiles ?? []) as LessonTileData[];
   const { data: gatingData, refetch: refetchGating } = useLessonGating(lessonId, requiredTiles);
   
   // State hooks
@@ -64,7 +65,7 @@ export default function LessonPage() {
   const course = data?.course ?? null;
   const module = data?.module ?? null;
   const lesson = data?.lesson ?? null;
-  const tiles = data?.tiles ?? [];
+  const tiles = (data?.tiles ?? []) as LessonTileData[];
   const allModules = data?.allModules ?? [];
   const allLessons = data?.allLessons ?? [];
   const prevLesson = data?.prevLesson ?? null;
@@ -73,6 +74,7 @@ export default function LessonPage() {
   const totalLessons = data?.totalLessons ?? 0;
   const currentLessonIndex = data?.currentLessonIndex ?? 0;
   const isCompleted = progress?.status === 'done';
+  const isLocked = (data as any)?.locked === true;
   
   // Check if we have tiles (new system) or legacy content
   const hasTiles = tiles.length > 0;
@@ -237,7 +239,117 @@ export default function LessonPage() {
     );
   }
 
-  // Not found state
+  // LOCKED state - lesson exists but blocked by RLS (not free)
+  if (isLocked && course && module) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="pt-24 pb-20">
+          <div className="container mx-auto px-4">
+            <div className="flex gap-8">
+              {/* Sidebar - still show navigation */}
+              {modulesWithLessons.length > 0 && (
+                <LessonSidebar
+                  courseSlug={courseSlug || ''}
+                  courseTitle={course.title}
+                  modules={modulesWithLessons}
+                  currentModuleOrder={moduleOrderNum}
+                  currentLessonOrder={lessonOrderNum}
+                  totalLessons={totalLessons}
+                  completedCount={completedCount}
+                />
+              )}
+              
+              {/* Locked content message */}
+              <div className="flex-1 max-w-3xl">
+                {/* Breadcrumbs */}
+                <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6 flex-wrap">
+                  <Link to="/kurzy" className="hover:text-foreground transition-colors">
+                    Kurzy
+                  </Link>
+                  <ChevronRight className="h-4 w-4 flex-shrink-0" />
+                  <Link 
+                    to={`/kurzy/${courseSlug}`} 
+                    className="hover:text-foreground transition-colors truncate max-w-[150px]"
+                    title={course.title}
+                  >
+                    {course.title}
+                  </Link>
+                  <ChevronRight className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate max-w-[120px]" title={module.title}>
+                    {module.title}
+                  </span>
+                </nav>
+                
+                <GlassCard className="text-center bg-gradient-to-br from-primary/5 to-accent/5">
+                  <div className="flex justify-center mb-6">
+                    <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Lock className="h-10 w-10 text-primary" />
+                    </div>
+                  </div>
+                  <h2 className="text-2xl font-display font-bold mb-3">
+                    Táto lekcia je zamknutá
+                  </h2>
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                    Táto lekcia je súčasťou plateného obsahu kurzu. 
+                    Pre prístup k všetkým lekciám si zakúpte plný prístup ku kurzu.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Button 
+                      size="lg"
+                      onClick={() => navigate(`/kurzy/${courseSlug}`)}
+                      className="gap-2"
+                    >
+                      <ShoppingCart className="h-5 w-5" />
+                      Kúpiť kurz
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="lg"
+                      onClick={() => navigate(`/kurzy/${courseSlug}`)}
+                    >
+                      Zobraziť info o kurze
+                    </Button>
+                  </div>
+                  
+                  {/* Navigation to other lessons */}
+                  <div className="mt-8 pt-6 border-t border-border/30">
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Môžete si pozrieť bezplatné lekcie v tomto kurze:
+                    </p>
+                    <div className="flex gap-3 justify-center">
+                      {prevLesson && (
+                        <Button 
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigateToLesson(prevLesson.moduleOrder, prevLesson.lesson_order)}
+                        >
+                          <ChevronLeft className="h-4 w-4 mr-1" />
+                          Predošlá lekcia
+                        </Button>
+                      )}
+                      {nextLesson && (
+                        <Button 
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigateToLesson(nextLesson.moduleOrder, nextLesson.lesson_order)}
+                        >
+                          Ďalšia lekcia
+                          <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </GlassCard>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Not found state - only if lesson truly doesn't exist
   if (!lesson || !course || !module) {
     return (
       <div className="min-h-screen bg-background">

@@ -1,10 +1,10 @@
-export { LessonTile, type LessonTileData } from './LessonTile';
+export { LessonTile, type LessonTileData, type TileType, TILE_ICONS } from './LessonTile';
 export { ContentTile } from './ContentTile';
 export { ExampleTile } from './ExampleTile';
 export { TranscriptTile } from './TranscriptTile';
 export { EthicsTile } from './EthicsTile';
-export { AntiPatternTile } from './AntiPatternTile';
+export { WarningTile } from './WarningTile';
 export { MiniTaskTile } from './MiniTaskTile';
-export { MiniQuizTile } from './MiniQuizTile';
-export { AudioTile } from './AudioTile';
+export { MiniTestTile } from './MiniTestTile';
+export { MediaTile } from './MediaTile';
 export { TileRenderer } from './TileRenderer';
