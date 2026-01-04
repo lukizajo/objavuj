@@ -34,6 +34,19 @@ export interface Lesson {
   created_at: string;
 }
 
+export interface LessonTile {
+  id: string;
+  lesson_id: string;
+  type: 'content' | 'example' | 'audio' | 'transcript' | 'mini_task' | 'mini_quiz' | 'ethics' | 'anti_pattern';
+  title: string;
+  icon: string;
+  body_md: string | null;
+  body_json: unknown;
+  position: number;
+  is_required: boolean;
+  created_at: string;
+}
+
 export function useCourses() {
   return useQuery({
     queryKey: ['courses'],
@@ -204,6 +217,18 @@ export function useLesson(courseSlug: string, moduleOrder: number, lessonOrder: 
         .in('module_id', moduleIds)
         .order('lesson_order', { ascending: true });
       
+      // Get lesson tiles ordered by position
+      let tiles: LessonTile[] = [];
+      if (lesson?.id) {
+        const { data: tilesData } = await supabase
+          .from('lesson_tiles')
+          .select('*')
+          .eq('lesson_id', lesson.id)
+          .order('position', { ascending: true });
+        
+        tiles = (tilesData || []) as LessonTile[];
+      }
+      
       // Find prev/next lessons
       const flatLessons = allModules?.flatMap(m => 
         allLessons?.filter(l => l.module_id === m.id).map(l => ({
@@ -219,14 +244,14 @@ export function useLesson(courseSlug: string, moduleOrder: number, lessonOrder: 
       const prevLesson = currentIndex > 0 ? flatLessons[currentIndex - 1] : null;
       const nextLesson = currentIndex < flatLessons.length - 1 ? flatLessons[currentIndex + 1] : null;
       
-      // Get task if exists
+      // Get task if exists (legacy support)
       const { data: task } = await supabase
         .from('tasks')
         .select('*')
         .eq('lesson_id', lesson?.id)
         .maybeSingle();
       
-      // Get quiz if exists
+      // Get quiz if exists (legacy support)
       const { data: quiz } = await supabase
         .from('quizzes')
         .select('*')
@@ -245,10 +270,16 @@ export function useLesson(courseSlug: string, moduleOrder: number, lessonOrder: 
         }));
       }
       
+      // Determine required tiles for gating
+      const requiredTiles = tiles.filter(t => 
+        t.is_required || t.type === 'mini_task' || t.type === 'mini_quiz'
+      );
+      
       return {
         course: course as Course,
         module: module as Module,
         lesson: lesson as Lesson,
+        tiles,
         allModules: allModules as Module[],
         allLessons: allLessons as Lesson[],
         prevLesson,
@@ -257,8 +288,67 @@ export function useLesson(courseSlug: string, moduleOrder: number, lessonOrder: 
         quiz: quiz ? { ...quiz, questions: quizQuestions } : null,
         totalLessons: flatLessons.length,
         currentLessonIndex: currentIndex + 1,
+        requiredTiles,
       };
     },
     enabled: !!courseSlug && moduleOrder > 0 && lessonOrder > 0,
+  });
+}
+
+// Hook to check if lesson can be unlocked (all required items completed)
+export function useLessonGating(lessonId: string | undefined, requiredTiles: LessonTile[] = []) {
+  return useQuery({
+    queryKey: ['lessonGating', lessonId, requiredTiles.map(t => t.id)],
+    queryFn: async () => {
+      if (!lessonId || requiredTiles.length === 0) {
+        return { canProceed: true, completedRequired: [], missingRequired: [] };
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return { canProceed: false, completedRequired: [], missingRequired: requiredTiles };
+      }
+
+      const completedRequired: string[] = [];
+      const missingRequired: LessonTile[] = [];
+
+      for (const tile of requiredTiles) {
+        if (tile.type === 'mini_task') {
+          const { data } = await supabase
+            .from('task_answers')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('task_id', tile.id)
+            .maybeSingle();
+          
+          if (data) {
+            completedRequired.push(tile.id);
+          } else {
+            missingRequired.push(tile);
+          }
+        } else if (tile.type === 'mini_quiz') {
+          const { data } = await supabase
+            .from('quiz_attempts')
+            .select('score')
+            .eq('user_id', user.id)
+            .eq('quiz_id', tile.id)
+            .maybeSingle();
+          
+          // Quiz is complete if score > 0 (correct answer)
+          if (data && data.score > 0) {
+            completedRequired.push(tile.id);
+          } else {
+            missingRequired.push(tile);
+          }
+        }
+      }
+
+      return {
+        canProceed: missingRequired.length === 0,
+        completedRequired,
+        missingRequired,
+      };
+    },
+    enabled: !!lessonId,
   });
 }

@@ -70,12 +70,53 @@ When deploying to your own Supabase instance (e.g., on Vercel), set the followin
 | `VITE_SUPABASE_URL` | Your Supabase project URL (e.g., `https://xxxxx.supabase.co`) |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Your Supabase anon/public key |
 
+### Local Development
+
+Create a `.env` file in the project root:
+
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=your-anon-key
+```
+
 ### Setting up on Vercel
 
 1. Go to your Vercel project dashboard
 2. Navigate to **Settings** → **Environment Variables**
 3. Add the variables above with your Supabase project values
 4. Redeploy your application
+
+## Database Schema
+
+This project uses the following Supabase tables:
+
+| Table | Description |
+|-------|-------------|
+| `courses` | Course metadata (title, slug, description) |
+| `modules` | Course modules with ordering |
+| `lessons` | Lesson content within modules |
+| `lesson_tiles` | Tile-based lesson content (content, examples, quizzes, tasks) |
+| `quizzes` | Quiz metadata |
+| `quiz_questions` | Quiz questions with options |
+| `quiz_attempts` | User quiz attempts and scores |
+| `tasks` | Task prompts for lessons |
+| `task_answers` | User task submissions |
+| `user_progress` | Lesson completion tracking |
+| `user_preferences` | User settings (theme, language) |
+| `profiles` | User profile data |
+| `avatar_events` | Analytics events |
+
+### Tile Types
+
+The `lesson_tiles` table supports these tile types:
+- `content` - Main lesson content (markdown)
+- `example` - Example content
+- `audio` - Audio player
+- `transcript` - Collapsible transcript
+- `mini_task` - Required task (blocks next lesson)
+- `mini_quiz` - Required quiz (blocks next lesson)
+- `ethics` - Ethics guidelines
+- `anti_pattern` - What to avoid
 
 ## How can I deploy this project?
 

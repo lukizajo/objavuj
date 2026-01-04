@@ -1,9 +1,9 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Check, Home, BookOpen, Trophy } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Home, BookOpen, Trophy, Lock } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLesson } from '@/hooks/useCourseData';
+import { useLesson, useLessonGating } from '@/hooks/useCourseData';
 import { useLessonProgress, useUpdateProgress, useUserProgress } from '@/hooks/useProgress';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +16,8 @@ import { Badge } from '@/components/ui/badge';
 import { LessonSidebar } from '@/components/LessonSidebar';
 import { MarkdownContent } from '@/components/MarkdownContent';
 import { AudioPlayer } from '@/components/AudioPlayer';
+import { TileRenderer } from '@/components/lesson-tiles';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function LessonPage() {
   // === ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP ===
@@ -23,6 +25,7 @@ export default function LessonPage() {
   // Router hooks
   const { courseSlug, moduleOrder, lessonOrder } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   
   // Context hooks
   const { t } = useLanguage();
@@ -48,14 +51,20 @@ export default function LessonPage() {
   const lessonId = data?.lesson?.id;
   const { data: progress } = useLessonProgress(lessonId);
   
+  // Get gating status
+  const requiredTiles = data?.requiredTiles ?? [];
+  const { data: gatingData, refetch: refetchGating } = useLessonGating(lessonId, requiredTiles);
+  
   // State hooks
   const [taskAnswer, setTaskAnswer] = useState('');
   const [taskSaved, setTaskSaved] = useState(false);
+  const [completedTileIds, setCompletedTileIds] = useState<Set<string>>(new Set());
 
   // Derived values - safe access with fallbacks
   const course = data?.course ?? null;
   const module = data?.module ?? null;
   const lesson = data?.lesson ?? null;
+  const tiles = data?.tiles ?? [];
   const allModules = data?.allModules ?? [];
   const allLessons = data?.allLessons ?? [];
   const prevLesson = data?.prevLesson ?? null;
@@ -64,6 +73,12 @@ export default function LessonPage() {
   const totalLessons = data?.totalLessons ?? 0;
   const currentLessonIndex = data?.currentLessonIndex ?? 0;
   const isCompleted = progress?.status === 'done';
+  
+  // Check if we have tiles (new system) or legacy content
+  const hasTiles = tiles.length > 0;
+  
+  // Gating: can we proceed to next lesson?
+  const canProceedToNext = gatingData?.canProceed ?? true;
 
   // Build modules with lessons for sidebar
   const modulesWithLessons = useMemo(() => {
@@ -84,6 +99,12 @@ export default function LessonPage() {
   const isLastLesson = !nextLesson;
 
   // Callbacks
+  const handleTileComplete = useCallback((tileId: string) => {
+    setCompletedTileIds(prev => new Set([...prev, tileId]));
+    // Refetch gating status
+    refetchGating();
+  }, [refetchGating]);
+
   const handleSaveTask = useCallback(async () => {
     if (!user || !task) return;
     await supabase.from('task_answers').upsert([{
@@ -307,69 +328,82 @@ export default function LessonPage() {
                 </h1>
               </div>
 
-              {/* Audio Player */}
-              {lesson.audio_path && (
-                <div className="mb-6">
-                  <AudioPlayer 
-                    audioUrl={lesson.audio_path}
-                    transcript={lesson.transcript_md ?? null}
-                    initialTime={progress?.last_position_sec ?? 0}
-                  />
-                </div>
-              )}
-
-              {/* Lesson Content */}
-              <GlassCard className="mb-8">
-                {lesson.content_md ? (
-                  <MarkdownContent content={lesson.content_md} />
-                ) : (
-                  <p className="text-muted-foreground italic">
-                    Obsah lekcie nie je k dispozícii.
-                  </p>
-                )}
-              </GlassCard>
-
-              {/* Examples */}
-              {lesson.examples_md && (
-                <GlassCard className="mb-8">
-                  <h2 className="text-xl font-semibold mb-4">{t.lesson.examples}</h2>
-                  <MarkdownContent content={lesson.examples_md} />
-                </GlassCard>
-              )}
-
-              {/* Task */}
-              {task && (
-                <GlassCard className="mb-8">
-                  <h2 className="text-xl font-semibold mb-4">{t.lesson.task}</h2>
-                  <p className="mb-4 text-muted-foreground">{task.prompt}</p>
-                  {user ? (
-                    <>
-                      <Textarea
-                        value={taskAnswer}
-                        onChange={(e) => setTaskAnswer(e.target.value)}
-                        placeholder={t.lesson.taskPlaceholder}
-                        className="min-h-32 mb-4"
+              {/* Tile-based content (new system) */}
+              {hasTiles ? (
+                <TileRenderer 
+                  tiles={tiles}
+                  lessonId={lesson.id}
+                  initialAudioTime={progress?.last_position_sec ?? 0}
+                  onTileComplete={handleTileComplete}
+                />
+              ) : (
+                /* Legacy content rendering */
+                <>
+                  {/* Audio Player */}
+                  {lesson.audio_path && (
+                    <div className="mb-6">
+                      <AudioPlayer 
+                        audioUrl={lesson.audio_path}
+                        transcript={lesson.transcript_md ?? null}
+                        initialTime={progress?.last_position_sec ?? 0}
                       />
-                      <Button onClick={handleSaveTask} disabled={taskSaved}>
-                        {taskSaved ? (
-                          <>
-                            <Check className="h-4 w-4 mr-2" />
-                            {t.lesson.taskSaved}
-                          </>
-                        ) : (
-                          t.common.save
-                        )}
-                      </Button>
-                    </>
-                  ) : (
-                    <p className="text-muted-foreground italic">{t.lesson.loginToSave}</p>
+                    </div>
                   )}
-                </GlassCard>
+
+                  {/* Lesson Content */}
+                  <GlassCard className="mb-8">
+                    {lesson.content_md ? (
+                      <MarkdownContent content={lesson.content_md} />
+                    ) : (
+                      <p className="text-muted-foreground italic">
+                        Obsah lekcie nie je k dispozícii.
+                      </p>
+                    )}
+                  </GlassCard>
+
+                  {/* Examples */}
+                  {lesson.examples_md && (
+                    <GlassCard className="mb-8">
+                      <h2 className="text-xl font-semibold mb-4">{t.lesson.examples}</h2>
+                      <MarkdownContent content={lesson.examples_md} />
+                    </GlassCard>
+                  )}
+
+                  {/* Task */}
+                  {task && (
+                    <GlassCard className="mb-8">
+                      <h2 className="text-xl font-semibold mb-4">{t.lesson.task}</h2>
+                      <p className="mb-4 text-muted-foreground">{task.prompt}</p>
+                      {user ? (
+                        <>
+                          <Textarea
+                            value={taskAnswer}
+                            onChange={(e) => setTaskAnswer(e.target.value)}
+                            placeholder={t.lesson.taskPlaceholder}
+                            className="min-h-32 mb-4"
+                          />
+                          <Button onClick={handleSaveTask} disabled={taskSaved}>
+                            {taskSaved ? (
+                              <>
+                                <Check className="h-4 w-4 mr-2" />
+                                {t.lesson.taskSaved}
+                              </>
+                            ) : (
+                              t.common.save
+                            )}
+                          </Button>
+                        </>
+                      ) : (
+                        <p className="text-muted-foreground italic">{t.lesson.loginToSave}</p>
+                      )}
+                    </GlassCard>
+                  )}
+                </>
               )}
 
               {/* Module completion message */}
               {isLastLesson && isCompleted && (
-                <GlassCard className="mb-8 text-center bg-gradient-to-br from-primary/10 to-accent/10 border-primary/20">
+                <GlassCard className="mb-8 mt-6 text-center bg-gradient-to-br from-primary/10 to-accent/10 border-primary/20">
                   <div className="flex justify-center mb-4">
                     <div className="h-16 w-16 rounded-full bg-success/20 flex items-center justify-center">
                       <Trophy className="h-8 w-8 text-success" />
@@ -385,7 +419,7 @@ export default function LessonPage() {
               )}
 
               {/* Actions */}
-              <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center justify-between gap-4 mt-8">
                 <div className="flex gap-2">
                   {prevLesson && (
                     <Button 
@@ -400,7 +434,11 @@ export default function LessonPage() {
                 
                 <div className="flex gap-2">
                   {!isCompleted && user && (
-                    <Button variant="default" onClick={handleComplete}>
+                    <Button 
+                      variant="default" 
+                      onClick={handleComplete}
+                      disabled={!canProceedToNext && hasTiles}
+                    >
                       <Check className="h-4 w-4 mr-2" />
                       {t.lesson.markComplete}
                     </Button>
@@ -408,9 +446,19 @@ export default function LessonPage() {
                   {nextLesson ? (
                     <Button 
                       onClick={() => navigateToLesson(nextLesson.moduleOrder, nextLesson.lesson_order)}
+                      disabled={!canProceedToNext && hasTiles && !isCompleted}
                     >
-                      {t.lesson.next}
-                      <ChevronRight className="h-4 w-4 ml-2" />
+                      {!canProceedToNext && hasTiles && !isCompleted ? (
+                        <>
+                          <Lock className="h-4 w-4 mr-2" />
+                          Dokončite povinné úlohy
+                        </>
+                      ) : (
+                        <>
+                          {t.lesson.next}
+                          <ChevronRight className="h-4 w-4 ml-2" />
+                        </>
+                      )}
                     </Button>
                   ) : (
                     <Button onClick={() => navigate(`/kurzy/${courseSlug}`)}>
