@@ -47,7 +47,6 @@ export type Database = {
           description: string | null
           id: string
           image_url: string | null
-          is_free: boolean
           schema_jsonld: Json | null
           slug: string
           title: string
@@ -57,7 +56,6 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
-          is_free?: boolean
           schema_jsonld?: Json | null
           slug: string
           title: string
@@ -67,7 +65,6 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
-          is_free?: boolean
           schema_jsonld?: Json | null
           slug?: string
           title?: string
@@ -176,7 +173,6 @@ export type Database = {
           course_id: string
           created_at: string
           id: string
-          is_free: boolean
           module_order: number
           title: string
         }
@@ -184,7 +180,6 @@ export type Database = {
           course_id: string
           created_at?: string
           id?: string
-          is_free?: boolean
           module_order: number
           title: string
         }
@@ -192,7 +187,6 @@ export type Database = {
           course_id?: string
           created_at?: string
           id?: string
-          is_free?: boolean
           module_order?: number
           title?: string
         }

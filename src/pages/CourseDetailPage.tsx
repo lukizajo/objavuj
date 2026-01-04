@@ -102,7 +102,7 @@ export default function CourseDetailPage() {
       '@type': 'CourseInstance',
       courseMode: 'online',
     },
-    isAccessibleForFree: course.is_free,
+    isAccessibleForFree: true,
   };
 
   return (
@@ -118,11 +118,6 @@ export default function CourseDetailPage() {
             {/* Course Header */}
             <div className="mb-8">
               <div className="flex items-center gap-2 mb-4">
-                {course.is_free && (
-                  <Badge className="bg-success/20 text-success border-success/30">
-                    {t.coursePreview.freeBadge}
-                  </Badge>
-                )}
                 <Badge variant="secondary">Pilot</Badge>
               </div>
               

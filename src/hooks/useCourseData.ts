@@ -7,7 +7,6 @@ export interface Course {
   title: string;
   slug: string;
   description: string | null;
-  is_free: boolean;
   image_url: string | null;
   created_at: string;
 }
@@ -17,7 +16,6 @@ export interface Module {
   course_id: string;
   title: string;
   module_order: number;
-  is_free: boolean;
   created_at: string;
 }
 
@@ -58,7 +56,7 @@ export function useCourses() {
         .order('created_at', { ascending: true });
       
       if (error) {
-        console.error('Courses fetch error:', error);
+        console.error('Courses fetch error:', error.message, error.code, error.details);
         throw error;
       }
       return data as Course[];
@@ -87,27 +85,21 @@ export function useCourse(slug: string) {
 }
 
 export function useModules(courseId: string | undefined) {
-  const { user } = useAuth();
-  
   return useQuery({
-    queryKey: ['modules', courseId, !!user],
+    queryKey: ['modules', courseId],
     queryFn: async () => {
       if (!courseId) return [];
       
-      let query = supabase
+      const { data, error } = await supabase
         .from('modules')
         .select('*')
         .eq('course_id', courseId)
         .order('module_order', { ascending: true });
       
-      // Anonymous users only see free modules
-      if (!user) {
-        query = query.eq('is_free', true);
+      if (error) {
+        console.error('Modules fetch error:', error.message, error.code);
+        throw error;
       }
-      
-      const { data, error } = await query;
-      
-      if (error) throw error;
       return data as Module[];
     },
     enabled: !!courseId,
@@ -128,11 +120,7 @@ export function useLessons(moduleId: string | undefined) {
         .eq('module_id', moduleId)
         .order('lesson_order', { ascending: true });
       
-      // Anonymous users only see free lessons
-      if (!user) {
-        query = query.eq('is_free', true);
-      }
-      
+      // Fetch all lessons - UI will handle locking non-free ones for anonymous users
       const { data, error } = await query;
       
       if (error) throw error;
@@ -161,18 +149,12 @@ export function useCourseWithModulesAndLessons(slug: string) {
       }
       if (!course) return null;
       
-      // Get modules
-      let modulesQuery = supabase
+      // Get all modules (access controlled at lesson level via is_free)
+      const { data: modules, error: modulesError } = await supabase
         .from('modules')
         .select('*')
         .eq('course_id', course.id)
         .order('module_order', { ascending: true });
-      
-      if (!user) {
-        modulesQuery = modulesQuery.eq('is_free', true);
-      }
-      
-      const { data: modules, error: modulesError } = await modulesQuery;
       
       if (modulesError) throw modulesError;
       
@@ -185,10 +167,7 @@ export function useCourseWithModulesAndLessons(slug: string) {
         .in('module_id', moduleIds)
         .order('lesson_order', { ascending: true });
       
-      if (!user) {
-        lessonsQuery = lessonsQuery.eq('is_free', true);
-      }
-      
+      // Fetch all lessons - UI will handle locking non-free ones for anonymous users
       const { data: lessons, error: lessonsError } = await lessonsQuery;
       
       if (lessonsError) throw lessonsError;
