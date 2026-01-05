@@ -271,7 +271,7 @@ export default function LandingPage() {
             <p className="text-muted-foreground mb-8 max-w-lg mx-auto">
               {t.podcast.description}
             </p>
-            <Button size="lg" variant="outline">
+            <Button size="lg" variant="outline" onClick={() => navigate('/podcast')}>
               {t.podcast.cta}
               <ExternalLink className="ml-2 h-4 w-4" />
             </Button>
