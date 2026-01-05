@@ -1,5 +1,6 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, BookOpen, Clock } from 'lucide-react';
+import { ArrowRight, BookOpen, Clock, X, Play } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCourses } from '@/hooks/useCourseData';
 import { Navbar } from '@/components/Navbar';
@@ -8,11 +9,48 @@ import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { Database } from '@/integrations/supabase/types';
+
+type Course = Database['public']['Tables']['courses']['Row'];
 
 export default function CoursesPage() {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { data: courses, isLoading } = useCourses();
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+
+  // Handle ESC key to close modal
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSelectedCourse(null);
+    };
+    
+    if (selectedCourse) {
+      document.addEventListener('keydown', handleEsc);
+      document.body.style.overflow = 'hidden';
+    }
+    
+    return () => {
+      document.removeEventListener('keydown', handleEsc);
+      document.body.style.overflow = 'unset';
+    };
+  }, [selectedCourse]);
+
+  const handleCourseClick = (course: Course) => {
+    setSelectedCourse(course);
+  };
+
+  const handleViewCourse = () => {
+    if (selectedCourse) {
+      navigate(`/kurzy/${selectedCourse.slug}`);
+    }
+  };
+
+  const handleStartCourse = () => {
+    if (selectedCourse) {
+      navigate(`/learn/${selectedCourse.slug}/1/0`);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -41,7 +79,12 @@ export default function CoursesPage() {
               ))
             ) : courses && courses.length > 0 ? (
               courses.map((course) => (
-                <GlassCard key={course.id} variant="hover" className="flex flex-col">
+                <GlassCard 
+                  key={course.id} 
+                  variant="hover" 
+                  className="flex flex-col cursor-pointer"
+                  onClick={() => handleCourseClick(course)}
+                >
                   <div className="h-40 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 mb-4 flex items-center justify-center">
                     <BookOpen className="h-16 w-16 text-primary/50" />
                   </div>
@@ -55,10 +98,7 @@ export default function CoursesPage() {
                     {course.description}
                   </p>
                   
-                  <Button 
-                    className="w-full" 
-                    onClick={() => navigate(`/courses/${course.slug}`)}
-                  >
+                  <Button className="w-full" onClick={(e) => { e.stopPropagation(); handleCourseClick(course); }}>
                     Zobraziť kurz
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -92,6 +132,64 @@ export default function CoursesPage() {
       </main>
 
       <Footer />
+
+      {/* Course Modal */}
+      {selectedCourse && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedCourse(null)}
+        >
+          {/* Backdrop with blur */}
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-md" />
+          
+          {/* Modal content */}
+          <GlassCard 
+            className="relative w-full max-w-lg z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setSelectedCourse(null)}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-secondary/80 transition-colors z-10"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            {/* Course image */}
+            <div className="h-48 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 mb-6 flex items-center justify-center">
+              <BookOpen className="h-20 w-20 text-primary/50" />
+            </div>
+
+            {/* Course info */}
+            <div className="flex items-center gap-2 mb-3">
+              <Badge variant="secondary">Pilot</Badge>
+            </div>
+
+            <h2 className="text-2xl font-display font-bold mb-3">{selectedCourse.title}</h2>
+            <p className="text-muted-foreground mb-6">{selectedCourse.description}</p>
+
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button 
+                variant="gradient" 
+                className="flex-1"
+                onClick={handleStartCourse}
+              >
+                <Play className="h-4 w-4 mr-2" />
+                Začať kurz
+              </Button>
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={handleViewCourse}
+              >
+                Zobraziť obsah
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </GlassCard>
+        </div>
+      )}
     </div>
   );
 }

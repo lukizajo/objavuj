@@ -193,12 +193,15 @@ export default function CourseDetailPage() {
                               ) : (
                                 <Lock className="h-4 w-4 text-muted-foreground/60" />
                               )}
-                              <span className={`flex-1 ${!isFree ? 'text-muted-foreground/70' : ''}`}>{lesson.title}</span>
+                              <span className={`flex-1 ${!isFree ? 'blur-[2px] select-none' : ''}`}>{lesson.title}</span>
                               {isFree && (
                                 <Badge variant="secondary" className="text-xs">Free</Badge>
                               )}
+                              {!isFree && (
+                                <Badge variant="outline" className="text-xs opacity-60">Zamknuté</Badge>
+                              )}
                               {lesson.duration_sec && (
-                                <span className="text-sm text-muted-foreground">
+                                <span className={`text-sm text-muted-foreground ${!isFree ? 'blur-[2px]' : ''}`}>
                                   {Math.ceil(lesson.duration_sec / 60)} min
                                 </span>
                               )}
