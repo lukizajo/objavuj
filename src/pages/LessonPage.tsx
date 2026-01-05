@@ -404,29 +404,6 @@ export default function LessonPage() {
             
             {/* Main content */}
             <div className="flex-1 max-w-3xl">
-              {/* Breadcrumbs */}
-              <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6 flex-wrap">
-                <Link to="/kurzy" className="hover:text-foreground transition-colors">
-                  Kurzy
-                </Link>
-                <ChevronRight className="h-4 w-4 flex-shrink-0" />
-                <Link 
-                  to={`/kurzy/${courseSlug}`} 
-                  className="hover:text-foreground transition-colors truncate max-w-[150px]"
-                  title={course.title}
-                >
-                  {course.title}
-                </Link>
-                <ChevronRight className="h-4 w-4 flex-shrink-0" />
-                <span className="truncate max-w-[120px]" title={module.title}>
-                  {module.title}
-                </span>
-                <ChevronRight className="h-4 w-4 flex-shrink-0" />
-                <span className="text-foreground truncate max-w-[150px]" title={lesson.title}>
-                  {lesson.title}
-                </span>
-              </nav>
-
               {/* Sticky Header with Audio Player above Title */}
               <div className="sticky top-20 z-10 bg-background/95 backdrop-blur-sm py-4 -mx-4 px-4 border-b border-border/30 mb-6">
                 {/* Audio Player - above title */}
