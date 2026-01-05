@@ -67,15 +67,8 @@ export default function CourseDetailPage() {
   const { course, modules, totalLessons } = data;
 
   const handleStartCourse = () => {
-    const targetPath = progressData?.nextLesson
-      ? `/learn/${courseSlug}/${progressData.nextLesson.moduleOrder}/${progressData.nextLesson.lessonOrder}`
-      : `/learn/${courseSlug}/1/1`;
-    
-    if (user) {
-      navigate(targetPath);
-    } else {
-      navigate(`/login?redirectTo=${encodeURIComponent(targetPath)}`);
-    }
+    // Direct link to first lesson (M01 Úvod)
+    navigate(`/learn/${courseSlug}/1/0`);
   };
 
   const handleLessonClick = (moduleOrder: number, lessonOrder: number, isFree: boolean) => {
