@@ -1,52 +1,148 @@
-import { ExternalLink, Headphones } from 'lucide-react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useState } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
-import { GlassCard } from '@/components/ui/glass-card';
-import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { 
+  PodcastHero, 
+  EpisodeCard, 
+  EpisodeList, 
+  EpisodeModal 
+} from '@/components/podcast';
+import { 
+  usePodcastEpisodes, 
+  useFeaturedEpisode, 
+  useLatestEpisodes,
+  useRegularEpisodes,
+  useSpecialEpisodes,
+  type PodcastEpisode 
+} from '@/hooks/usePodcastData';
 
 export default function PodcastPage() {
-  const { t } = useLanguage();
+  const { data: episodes, isLoading, error } = usePodcastEpisodes();
+  const [selectedEpisode, setSelectedEpisode] = useState<PodcastEpisode | null>(null);
+
+  // Derived data
+  const featuredEpisode = useFeaturedEpisode(episodes);
+  const latestEpisodes = useLatestEpisodes(episodes, featuredEpisode?.id, 3);
+  const regularEpisodes = useRegularEpisodes(episodes);
+  const specialEpisodes = useSpecialEpisodes(episodes);
+
+  // Find intro episode (episode 0 or 1, or marked as intro)
+  const introEpisode = episodes?.find(ep => ep.episode_number === 0 || ep.episode_number === 1);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
       
       <main className="flex-1 pt-24 pb-16">
+        {/* Hero Section */}
+        <PodcastHero />
+
         <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto text-center">
-            <GlassCard padding="lg" className="space-y-6">
-              <div className="w-20 h-20 mx-auto rounded-full bg-primary/20 flex items-center justify-center">
-                <Headphones className="h-10 w-10 text-primary" />
+          {/* Loading State */}
+          {isLoading && (
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Skeleton className="h-80 w-full" />
+                <Skeleton className="h-80 w-full" />
               </div>
-              
-              <h1 className="text-3xl md:text-4xl font-display font-bold gradient-text">
-                {t.podcast.title}
-              </h1>
-              
-              <p className="text-lg text-muted-foreground">
-                {t.podcast.description}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <Skeleton className="h-64 w-full" />
+                <Skeleton className="h-64 w-full" />
+                <Skeleton className="h-64 w-full" />
+              </div>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">
+                Nepodarilo sa načítať epizódy. Skúste to neskôr.
               </p>
-              
-              <Button 
-                variant="gradient" 
-                size="lg"
-                onClick={() => window.open('https://open.spotify.com', '_blank')}
-                className="gap-2"
-              >
-                <ExternalLink className="h-4 w-4" />
-                {t.podcast.cta}
-              </Button>
-              
-              <p className="text-sm text-muted-foreground">
-                Spotify • Apple Podcasts • YouTube
-              </p>
-            </GlassCard>
-          </div>
+            </div>
+          )}
+
+          {/* Content */}
+          {!isLoading && !error && episodes && (
+            <>
+              {/* Featured + Intro Section */}
+              {(featuredEpisode || introEpisode) && (
+                <section className="py-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {featuredEpisode && (
+                      <div>
+                        <h2 className="text-xl font-display font-bold mb-4">Aktuálna epizóda</h2>
+                        <EpisodeCard 
+                          episode={featuredEpisode} 
+                          variant="featured"
+                          onClick={() => setSelectedEpisode(featuredEpisode)}
+                        />
+                      </div>
+                    )}
+                    
+                    {introEpisode && introEpisode.id !== featuredEpisode?.id && (
+                      <div>
+                        <h2 className="text-xl font-display font-bold mb-4">Úvodná epizóda</h2>
+                        <EpisodeCard 
+                          episode={introEpisode} 
+                          variant="featured"
+                          onClick={() => setSelectedEpisode(introEpisode)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </section>
+              )}
+
+              {/* Latest Episodes */}
+              {latestEpisodes.length > 0 && (
+                <EpisodeList
+                  episodes={latestEpisodes}
+                  title="Posledné epizódy"
+                  onEpisodeClick={setSelectedEpisode}
+                />
+              )}
+
+              {/* All Episodes */}
+              {regularEpisodes.length > 0 && (
+                <EpisodeList
+                  episodes={regularEpisodes}
+                  title="Všetky epizódy"
+                  onEpisodeClick={setSelectedEpisode}
+                  variant="list"
+                />
+              )}
+
+              {/* Special Episodes */}
+              {specialEpisodes.length > 0 && (
+                <EpisodeList
+                  episodes={specialEpisodes}
+                  title="Špeciálne epizódy"
+                  onEpisodeClick={setSelectedEpisode}
+                />
+              )}
+
+              {/* Empty State */}
+              {episodes.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">
+                    Zatiaľ nemáme žiadne epizódy. Čoskoro pribudnú!
+                  </p>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </main>
 
       <Footer />
+
+      {/* Episode Modal */}
+      <EpisodeModal 
+        episode={selectedEpisode} 
+        onClose={() => setSelectedEpisode(null)} 
+      />
     </div>
   );
 }
