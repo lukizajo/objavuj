@@ -427,9 +427,39 @@ export default function LessonPage() {
                 </span>
               </nav>
 
-              {/* Sticky Header with Title and Audio Player */}
+              {/* Sticky Header with Audio Player above Title */}
               <div className="sticky top-20 z-10 bg-background/95 backdrop-blur-sm py-4 -mx-4 px-4 border-b border-border/30 mb-6">
-                <div className="flex items-center gap-2 mb-2">
+                {/* Audio Player - above title */}
+                {(() => {
+                  const audioTile = tiles.find(t => t.tile_type === 'audio');
+                  const audioUrl = audioTile?.media_url;
+                  
+                  if (audioUrl) {
+                    return (
+                      <div className="mb-3">
+                        <AudioPlayer 
+                          audioUrl={audioUrl}
+                          transcript={null}
+                          initialTime={progress?.last_position_sec ?? 0}
+                        />
+                      </div>
+                    );
+                  }
+                  
+                  return (
+                    <div className="mb-3 flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-border/30">
+                      <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                        <VolumeX className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Je mi to ľúto, ale v tejto lekcii sa počuť nebudeme. 🥺
+                      </p>
+                    </div>
+                  );
+                })()}
+                
+                {/* Title */}
+                <div className="flex items-center gap-2">
                   <Badge variant="secondary" className="bg-primary text-primary-foreground">
                     {lessonOrderNum}
                   </Badge>
@@ -443,35 +473,6 @@ export default function LessonPage() {
                     </Badge>
                   )}
                 </div>
-                
-                {/* Sticky Audio Player */}
-                {(() => {
-                  const audioTile = tiles.find(t => t.tile_type === 'audio');
-                  const audioUrl = audioTile?.media_url;
-                  
-                  if (audioUrl) {
-                    return (
-                      <div className="mt-3">
-                        <AudioPlayer 
-                          audioUrl={audioUrl}
-                          transcript={null}
-                          initialTime={progress?.last_position_sec ?? 0}
-                        />
-                      </div>
-                    );
-                  }
-                  
-                  return (
-                    <div className="mt-3 flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-border/30">
-                      <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                        <VolumeX className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Je mi to ľúto, ale v tejto lekcii sa počuť nebudeme. 🥺
-                      </p>
-                    </div>
-                  );
-                })()}
               </div>
 
               {/* Tile-based content (new system) */}
