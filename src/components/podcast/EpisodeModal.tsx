@@ -16,6 +16,11 @@ interface EpisodeModalProps {
 export function EpisodeModal({ episode, onClose }: EpisodeModalProps) {
   const [showTranscript, setShowTranscript] = useState(false);
 
+  // Reset transcript state when episode changes
+  useEffect(() => {
+    setShowTranscript(false);
+  }, [episode?.id]);
+
   // Handle ESC key
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
