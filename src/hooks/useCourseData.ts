@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import type { TileType } from '@/components/lesson-tiles/LessonTile';
 
 export interface Course {
   id: string;
@@ -15,6 +16,7 @@ export interface Module {
   id: string;
   course_id: string;
   title: string;
+  code?: string;
   module_order: number;
   created_at: string;
 }
@@ -30,20 +32,24 @@ export interface Lesson {
   audio_path: string | null;
   duration_sec: number | null;
   is_free: boolean;
+  is_published?: boolean;
   created_at: string;
 }
 
+// LessonTile interface matching DB schema
 export interface LessonTile {
   id: string;
   lesson_id: string;
-  type: 'content' | 'example' | 'audio' | 'transcript' | 'mini_task' | 'mini_quiz' | 'ethics' | 'anti_pattern';
+  tile_type: TileType;  // content | example | transcript | mini_task | mini_test | media | warning | ethics
+  tile_order: number;
   title: string;
-  icon: string;
-  body_md: string | null;
-  body_json: unknown;
-  position: number;
+  content_md: string | null;
   is_required: boolean;
-  created_at: string;
+  media_url: string | null;
+  mini_task_id: string | null;
+  created_at?: string;
+  // Legacy/optional fields for backward compatibility
+  icon?: string;
 }
 
 export function useCourses() {
@@ -107,21 +113,16 @@ export function useModules(courseId: string | undefined) {
 }
 
 export function useLessons(moduleId: string | undefined) {
-  const { user } = useAuth();
-  
   return useQuery({
-    queryKey: ['lessons', moduleId, !!user],
+    queryKey: ['lessons', moduleId],
     queryFn: async () => {
       if (!moduleId) return [];
       
-      let query = supabase
+      const { data, error } = await supabase
         .from('lessons')
         .select('*')
         .eq('module_id', moduleId)
         .order('lesson_order', { ascending: true });
-      
-      // Fetch all lessons - UI will handle locking non-free ones for anonymous users
-      const { data, error } = await query;
       
       if (error) throw error;
       return data as Lesson[];
@@ -131,12 +132,10 @@ export function useLessons(moduleId: string | undefined) {
 }
 
 export function useCourseWithModulesAndLessons(slug: string) {
-  const { user } = useAuth();
-  
   return useQuery({
-    queryKey: ['courseComplete', slug, !!user],
+    queryKey: ['courseComplete', slug],
     queryFn: async () => {
-      // Get course (no is_free filter on courses)
+      // Get course
       const { data: course, error: courseError } = await supabase
         .from('courses')
         .select('*')
@@ -149,7 +148,7 @@ export function useCourseWithModulesAndLessons(slug: string) {
       }
       if (!course) return null;
       
-      // Get all modules (access controlled at lesson level via is_free)
+      // Get all modules
       const { data: modules, error: modulesError } = await supabase
         .from('modules')
         .select('*')
@@ -161,14 +160,11 @@ export function useCourseWithModulesAndLessons(slug: string) {
       // Get all lessons for this course's modules
       const moduleIds = modules?.map(m => m.id) || [];
       
-      let lessonsQuery = supabase
+      const { data: lessons, error: lessonsError } = await supabase
         .from('lessons')
         .select('*')
         .in('module_id', moduleIds)
         .order('lesson_order', { ascending: true });
-      
-      // Fetch all lessons - UI will handle locking non-free ones for anonymous users
-      const { data: lessons, error: lessonsError } = await lessonsQuery;
       
       if (lessonsError) throw lessonsError;
       
@@ -192,7 +188,7 @@ export function useLesson(courseSlug: string, moduleOrder: number, lessonOrder: 
   return useQuery({
     queryKey: ['lesson', courseSlug, moduleOrder, lessonOrder],
     queryFn: async () => {
-      // Get course
+      // Step 1: Get course
       const { data: course, error: courseError } = await supabase
         .from('courses')
         .select('*')
@@ -200,9 +196,9 @@ export function useLesson(courseSlug: string, moduleOrder: number, lessonOrder: 
         .maybeSingle();
       
       if (courseError) throw courseError;
-      if (!course) return null;
+      if (!course) return { notFound: true, reason: 'course' };
       
-      // Get module
+      // Step 2: Get module
       const { data: module, error: moduleError } = await supabase
         .from('modules')
         .select('*')
@@ -211,9 +207,10 @@ export function useLesson(courseSlug: string, moduleOrder: number, lessonOrder: 
         .maybeSingle();
       
       if (moduleError) throw moduleError;
-      if (!module) return null;
+      if (!module) return { notFound: true, reason: 'module', course };
       
-      // Get lesson
+      // Step 3: Get lesson - SEPARATE FETCH (no JOIN with tiles)
+      // RLS may block this if lesson is not free
       const { data: lesson, error: lessonError } = await supabase
         .from('lessons')
         .select('*')
@@ -221,9 +218,11 @@ export function useLesson(courseSlug: string, moduleOrder: number, lessonOrder: 
         .eq('lesson_order', lessonOrder)
         .maybeSingle();
       
+      // If lesson is null but no error, it may be locked by RLS
+      // We still want to show a "locked" UI, not "not found"
       if (lessonError) throw lessonError;
       
-      // Get all lessons for navigation
+      // Get all modules and lessons for navigation (these should be visible)
       const { data: allModules } = await supabase
         .from('modules')
         .select('*')
@@ -238,19 +237,7 @@ export function useLesson(courseSlug: string, moduleOrder: number, lessonOrder: 
         .in('module_id', moduleIds)
         .order('lesson_order', { ascending: true });
       
-      // Get lesson tiles ordered by position
-      let tiles: LessonTile[] = [];
-      if (lesson?.id) {
-        const { data: tilesData } = await supabase
-          .from('lesson_tiles')
-          .select('*')
-          .eq('lesson_id', lesson.id)
-          .order('position', { ascending: true });
-        
-        tiles = (tilesData || []) as LessonTile[];
-      }
-      
-      // Find prev/next lessons
+      // Find prev/next lessons for navigation
       const flatLessons = allModules?.flatMap(m => 
         allLessons?.filter(l => l.module_id === m.id).map(l => ({
           ...l,
@@ -265,18 +252,50 @@ export function useLesson(courseSlug: string, moduleOrder: number, lessonOrder: 
       const prevLesson = currentIndex > 0 ? flatLessons[currentIndex - 1] : null;
       const nextLesson = currentIndex < flatLessons.length - 1 ? flatLessons[currentIndex + 1] : null;
       
-      // Get task if exists (legacy support)
+      // If lesson is locked (null due to RLS), return locked state
+      if (!lesson) {
+        return {
+          locked: true,
+          course: course as Course,
+          module: module as Module,
+          lesson: null,
+          tiles: [],
+          allModules: allModules as Module[],
+          allLessons: allLessons as Lesson[],
+          prevLesson,
+          nextLesson,
+          task: null,
+          quiz: null,
+          totalLessons: flatLessons.length,
+          currentLessonIndex: currentIndex + 1,
+          requiredTiles: [],
+        };
+      }
+      
+      // Step 4: Get lesson tiles - SEPARATE FETCH using tile_order
+      let tiles: LessonTile[] = [];
+      const { data: tilesData, error: tilesError } = await supabase
+        .from('lesson_tiles')
+        .select('*')
+        .eq('lesson_id', lesson.id)
+        .order('tile_order', { ascending: true });
+      
+      if (!tilesError && tilesData) {
+        tiles = tilesData as LessonTile[];
+      }
+      
+      // Legacy support: Get task if exists
       const { data: task } = await supabase
         .from('tasks')
         .select('*')
-        .eq('lesson_id', lesson?.id)
+        .eq('lesson_id', lesson.id)
         .maybeSingle();
       
-      // Get quiz if exists (legacy support)
+      // Legacy support: Get quiz if exists
       const { data: quiz } = await supabase
         .from('quizzes')
         .select('*')
-        .eq('lesson_id', lesson?.id)
+        .eq('lesson_id', lesson.id)
         .maybeSingle();
       
       let quizQuestions: { id: string; question: string; options_json: string[]; correct_index: number }[] = [];
@@ -291,9 +310,9 @@ export function useLesson(courseSlug: string, moduleOrder: number, lessonOrder: 
         }));
       }
       
-      // Determine required tiles for gating
+      // Determine required tiles for gating (mini_task and mini_test are required)
       const requiredTiles = tiles.filter(t => 
-        t.is_required || t.type === 'mini_task' || t.type === 'mini_quiz'
+        t.is_required || t.tile_type === 'mini_task' || t.tile_type === 'mini_test'
       );
       
       return {
@@ -312,7 +331,7 @@ export function useLesson(courseSlug: string, moduleOrder: number, lessonOrder: 
         requiredTiles,
       };
     },
-    enabled: !!courseSlug && moduleOrder > 0 && lessonOrder > 0,
+    enabled: !!courseSlug && moduleOrder >= 0 && lessonOrder >= 0,
   });
 }
 
@@ -334,12 +353,14 @@ export function useLessonGating(lessonId: string | undefined, requiredTiles: Les
       const missingRequired: LessonTile[] = [];
 
       for (const tile of requiredTiles) {
-        if (tile.type === 'mini_task') {
+        if (tile.tile_type === 'mini_task') {
+          // Check task_answers using mini_task_id
+          const taskId = tile.mini_task_id || tile.id;
           const { data } = await supabase
             .from('task_answers')
             .select('id')
             .eq('user_id', user.id)
-            .eq('task_id', tile.id)
+            .eq('task_id', taskId)
             .maybeSingle();
           
           if (data) {
@@ -347,7 +368,7 @@ export function useLessonGating(lessonId: string | undefined, requiredTiles: Les
           } else {
             missingRequired.push(tile);
           }
-        } else if (tile.type === 'mini_quiz') {
+        } else if (tile.tile_type === 'mini_test') {
           const { data } = await supabase
             .from('quiz_attempts')
             .select('score')

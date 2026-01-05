@@ -1,25 +1,42 @@
 import { GlassCard } from '@/components/ui/glass-card';
 import { cn } from '@/lib/utils';
 
+// Tile types matching DB constraint
+export type TileType = 'content' | 'example' | 'transcript' | 'mini_task' | 'mini_test' | 'media' | 'warning' | 'ethics';
+
 export interface LessonTileData {
   id: string;
   lesson_id: string;
-  type: 'content' | 'example' | 'audio' | 'transcript' | 'mini_task' | 'mini_quiz' | 'ethics' | 'anti_pattern';
+  tile_type: TileType;
+  tile_order: number;
   title: string;
-  icon: string;
-  body_md: string | null;
-  body_json: unknown;
-  position: number;
+  content_md: string | null;
   is_required: boolean;
+  media_url: string | null;
+  mini_task_id: string | null;
+  // Legacy fields for backward compatibility during transition
+  icon?: string;
 }
 
 interface LessonTileProps {
   children: React.ReactNode;
-  icon: string;
+  icon?: string;
   title: string;
   variant?: 'default' | 'required' | 'optional';
   className?: string;
 }
+
+// Default icons for each tile type
+export const TILE_ICONS: Record<TileType, string> = {
+  content: '📝',
+  example: '💡',
+  transcript: '📄',
+  mini_task: '🎓',
+  mini_test: '✅',
+  media: '🎧',
+  warning: '⚠️',
+  ethics: '🤔',
+};
 
 export function LessonTile({ children, icon, title, variant = 'default', className }: LessonTileProps) {
   return (
@@ -33,7 +50,7 @@ export function LessonTile({ children, icon, title, variant = 'default', classNa
       )}
     >
       <div className="flex items-center gap-3 mb-4">
-        <span className="text-2xl" role="img" aria-label={title}>{icon}</span>
+        <span className="text-2xl" role="img" aria-label={title}>{icon || '📝'}</span>
         <h3 className="text-lg font-display font-semibold text-foreground">{title}</h3>
       </div>
       {children}
