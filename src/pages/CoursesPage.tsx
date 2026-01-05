@@ -1,14 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, BookOpen, Clock, X, Play } from 'lucide-react';
+import { ArrowRight, BookOpen, Clock, X, Play, Lock, ShoppingCart } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useCourses } from '@/hooks/useCourseData';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCourses, useCourseWithModulesAndLessons } from '@/hooks/useCourseData';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import type { Database } from '@/integrations/supabase/types';
 
 type Course = Database['public']['Tables']['courses']['Row'];
@@ -16,16 +23,18 @@ type Course = Database['public']['Tables']['courses']['Row'];
 export default function CoursesPage() {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { user } = useAuth();
   const { data: courses, isLoading } = useCourses();
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [selectedCourseSlug, setSelectedCourseSlug] = useState<string | null>(null);
+  const { data: courseData, isLoading: courseLoading } = useCourseWithModulesAndLessons(selectedCourseSlug || '');
 
   // Handle ESC key to close modal
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setSelectedCourse(null);
+      if (e.key === 'Escape') setSelectedCourseSlug(null);
     };
     
-    if (selectedCourse) {
+    if (selectedCourseSlug) {
       document.addEventListener('keydown', handleEsc);
       document.body.style.overflow = 'hidden';
     }
@@ -34,22 +43,25 @@ export default function CoursesPage() {
       document.removeEventListener('keydown', handleEsc);
       document.body.style.overflow = 'unset';
     };
-  }, [selectedCourse]);
+  }, [selectedCourseSlug]);
 
   const handleCourseClick = (course: Course) => {
-    setSelectedCourse(course);
-  };
-
-  const handleViewCourse = () => {
-    if (selectedCourse) {
-      navigate(`/kurzy/${selectedCourse.slug}`);
-    }
+    setSelectedCourseSlug(course.slug);
   };
 
   const handleStartCourse = () => {
-    if (selectedCourse) {
-      navigate(`/learn/${selectedCourse.slug}/1/0`);
+    if (selectedCourseSlug) {
+      navigate(`/learn/${selectedCourseSlug}/1/0`);
     }
+  };
+
+  const handleLessonClick = (moduleOrder: number, lessonOrder: number, isFree: boolean) => {
+    if (!selectedCourseSlug) return;
+    
+    if (isFree) {
+      navigate(`/learn/${selectedCourseSlug}/${moduleOrder}/${lessonOrder}`);
+    }
+    // Locked lessons don't navigate - user sees they're locked
   };
 
   return (
@@ -133,61 +145,159 @@ export default function CoursesPage() {
 
       <Footer />
 
-      {/* Course Modal */}
-      {selectedCourse && (
+      {/* Course Detail Modal */}
+      {selectedCourseSlug && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedCourse(null)}
+          onClick={() => setSelectedCourseSlug(null)}
         >
           {/* Backdrop with blur */}
           <div className="absolute inset-0 bg-background/80 backdrop-blur-md" />
           
-          {/* Modal content */}
-          <GlassCard 
-            className="relative w-full max-w-lg z-10"
+          {/* Modal content - full course detail */}
+          <div 
+            className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto z-10 bg-background/95 backdrop-blur-xl rounded-2xl border border-border/40 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close button */}
             <button
-              onClick={() => setSelectedCourse(null)}
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-secondary/80 transition-colors z-10"
+              onClick={() => setSelectedCourseSlug(null)}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-secondary/80 transition-colors z-20 bg-background/50"
             >
               <X className="h-5 w-5" />
             </button>
 
-            {/* Course image */}
-            <div className="h-48 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 mb-6 flex items-center justify-center">
-              <BookOpen className="h-20 w-20 text-primary/50" />
-            </div>
+            {courseLoading ? (
+              <div className="p-8">
+                <Skeleton className="h-10 w-3/4 mb-4" />
+                <Skeleton className="h-6 w-full mb-8" />
+                <Skeleton className="h-64 w-full" />
+              </div>
+            ) : courseData ? (
+              <div className="p-8">
+                {/* Course Header */}
+                <div className="mb-8">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Badge variant="secondary">Pilot</Badge>
+                  </div>
+                  
+                  <h1 className="text-3xl md:text-4xl font-display font-bold mb-4">
+                    {courseData.course.title}
+                  </h1>
+                  
+                  <p className="text-lg text-muted-foreground mb-6">
+                    {courseData.course.description}
+                  </p>
+                  
+                  <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-6">
+                    <span className="flex items-center gap-2">
+                      <BookOpen className="h-4 w-4" />
+                      {courseData.modules.length} {t.coursePreview.modules}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Play className="h-4 w-4" />
+                      {courseData.totalLessons} {t.coursePreview.lessons}
+                    </span>
+                  </div>
 
-            {/* Course info */}
-            <div className="flex items-center gap-2 mb-3">
-              <Badge variant="secondary">Pilot</Badge>
-            </div>
+                  <Button size="lg" variant="gradient" onClick={handleStartCourse}>
+                    {t.coursePreview.startFree}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
 
-            <h2 className="text-2xl font-display font-bold mb-3">{selectedCourse.title}</h2>
-            <p className="text-muted-foreground mb-6">{selectedCourse.description}</p>
+                {/* Module List */}
+                <GlassCard>
+                  <h2 className="text-xl font-display font-semibold mb-4">Obsah kurzu</h2>
+                  
+                  <Accordion type="multiple" className="space-y-2">
+                    {courseData.modules.map((module) => (
+                      <AccordionItem key={module.id} value={module.id} className="border rounded-lg px-4">
+                        <AccordionTrigger className="hover:no-underline">
+                          <div className="flex items-center gap-3 text-left">
+                            <div className="h-8 w-8 rounded-full gradient-bg flex items-center justify-center text-sm font-bold text-primary-foreground">
+                              {module.module_order}
+                            </div>
+                            <div>
+                              <div className="font-medium">{module.title}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {module.lessons.length} {t.coursePreview.lessons}
+                              </div>
+                            </div>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <ul className="space-y-2 pt-2">
+                            {module.lessons.map((lesson) => {
+                              const isFree = lesson.is_free;
+                              return (
+                                <li key={lesson.id}>
+                                  <button
+                                    onClick={() => handleLessonClick(module.module_order, lesson.lesson_order, isFree)}
+                                    className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
+                                      isFree 
+                                        ? 'hover:bg-secondary/50 cursor-pointer' 
+                                        : 'cursor-default bg-secondary/20'
+                                    }`}
+                                  >
+                                    {isFree ? (
+                                      <Play className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                    ) : (
+                                      <Lock className="h-4 w-4 text-muted-foreground/60 flex-shrink-0" />
+                                    )}
+                                    <span className={`flex-1 ${!isFree ? 'blur-[2px] select-none' : ''}`}>
+                                      {lesson.title}
+                                    </span>
+                                    {isFree && (
+                                      <Badge variant="secondary" className="text-xs flex-shrink-0">Free</Badge>
+                                    )}
+                                    {!isFree && (
+                                      <Badge variant="outline" className="text-xs opacity-60 flex-shrink-0">
+                                        <Lock className="h-3 w-3 mr-1" />
+                                        Zamknuté
+                                      </Badge>
+                                    )}
+                                    {lesson.duration_sec && (
+                                      <span className={`text-sm text-muted-foreground flex-shrink-0 ${!isFree ? 'blur-[2px]' : ''}`}>
+                                        {Math.ceil(lesson.duration_sec / 60)} min
+                                      </span>
+                                    )}
+                                  </button>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                </GlassCard>
 
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button 
-                variant="gradient" 
-                className="flex-1"
-                onClick={handleStartCourse}
-              >
-                <Play className="h-4 w-4 mr-2" />
-                Začať kurz
-              </Button>
-              <Button 
-                variant="outline" 
-                className="flex-1"
-                onClick={handleViewCourse}
-              >
-                Zobraziť obsah
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </GlassCard>
+                {/* Purchase CTA for locked content */}
+                <GlassCard className="mt-6 border-primary/20">
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <ShoppingCart className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold">Odomknúť všetky lekcie</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Získajte prístup ku všetkým zamknutým lekciám a prémiovému obsahu.
+                      </p>
+                    </div>
+                    <Button variant="gradient" onClick={() => navigate(`/kurzy/${selectedCourseSlug}`)}>
+                      <ShoppingCart className="h-4 w-4 mr-2" />
+                      Kúpiť
+                    </Button>
+                  </div>
+                </GlassCard>
+              </div>
+            ) : (
+              <div className="p-8 text-center">
+                <p className="text-muted-foreground">Kurz nebol nájdený</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
