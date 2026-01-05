@@ -110,35 +110,32 @@ export function LessonSidebar({
                       
                       return (
                         <li key={lesson.id}>
-                          {canAccess ? (
-                            <Link
-                              to={`/learn/${courseSlug}/${module.module_order}/${lesson.lesson_order}`}
-                              className={cn(
-                                "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors",
-                                isActive 
-                                  ? "bg-primary/10 text-primary font-medium" 
-                                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                          <Link
+                            to={`/learn/${courseSlug}/${module.module_order}/${lesson.lesson_order}`}
+                            className={cn(
+                              "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors",
+                              isActive 
+                                ? "bg-primary/10 text-primary font-medium" 
+                                : canAccess
+                                  ? "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                                  : "text-muted-foreground/60 hover:bg-secondary/30"
+                            )}
+                          >
+                            <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
+                              {isCompleted ? (
+                                <Check className="h-4 w-4 text-success" />
+                              ) : !canAccess ? (
+                                <Lock className="h-3 w-3" />
+                              ) : isActive ? (
+                                <Play className="h-3 w-3 text-primary" />
+                              ) : (
+                                <span className="text-xs text-muted-foreground">
+                                  {lesson.lesson_order}
+                                </span>
                               )}
-                            >
-                              <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
-                                {isCompleted ? (
-                                  <Check className="h-4 w-4 text-success" />
-                                ) : isActive ? (
-                                  <Play className="h-3 w-3 text-primary" />
-                                ) : (
-                                  <span className="text-xs text-muted-foreground">
-                                    {lesson.lesson_order}
-                                  </span>
-                                )}
-                              </span>
-                              <span className="line-clamp-2 text-left">{lesson.title}</span>
-                            </Link>
-                          ) : (
-                            <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground/60 cursor-not-allowed">
-                              <Lock className="h-4 w-4 flex-shrink-0" />
-                              <span className="line-clamp-2">{lesson.title}</span>
-                            </div>
-                          )}
+                            </span>
+                            <span className="line-clamp-2 text-left">{lesson.title}</span>
+                          </Link>
                         </li>
                       );
                     })}

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowRight, BookOpen, Lock, Play, LogIn } from 'lucide-react';
+import { ArrowRight, BookOpen, Lock, Play, LogIn, ShoppingCart } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCourseWithModulesAndLessons } from '@/hooks/useCourseData';
@@ -35,6 +35,7 @@ export default function CourseDetailPage() {
   const { data: progressData } = useCourseProgress(courseSlug || '');
   
   const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [showLockedDialog, setShowLockedDialog] = useState(false);
   const [targetLessonPath, setTargetLessonPath] = useState('');
 
   if (isLoading) {
@@ -66,26 +67,22 @@ export default function CourseDetailPage() {
   const { course, modules, totalLessons } = data;
 
   const handleStartCourse = () => {
-    const targetPath = progressData?.nextLesson
-      ? `/learn/${courseSlug}/${progressData.nextLesson.moduleOrder}/${progressData.nextLesson.lessonOrder}`
-      : `/learn/${courseSlug}/1/1`;
-    
-    if (user) {
-      navigate(targetPath);
-    } else {
-      navigate(`/login?redirectTo=${encodeURIComponent(targetPath)}`);
-    }
+    // Direct link to first lesson (M01 Úvod)
+    navigate(`/learn/${courseSlug}/1/0`);
   };
 
-  const handleLessonClick = (moduleOrder: number, lessonOrder: number) => {
+  const handleLessonClick = (moduleOrder: number, lessonOrder: number, isFree: boolean) => {
     const targetPath = `/learn/${courseSlug}/${moduleOrder}/${lessonOrder}`;
     
-    if (user) {
+    // Free lessons: navigate directly (works for both anon and authenticated)
+    if (isFree) {
       navigate(targetPath);
-    } else {
-      setTargetLessonPath(targetPath);
-      setShowLoginDialog(true);
+      return;
     }
+    
+    // Locked lessons: show locked modal with purchase CTA (not login)
+    setTargetLessonPath(targetPath);
+    setShowLockedDialog(true);
   };
 
   // Generate JSON-LD for SEO
@@ -183,14 +180,23 @@ export default function CourseDetailPage() {
                     </AccordionTrigger>
                     <AccordionContent>
                       <ul className="space-y-2 pt-2">
-                        {module.lessons.map((lesson) => (
+                        {module.lessons.map((lesson) => {
+                          const isFree = lesson.is_free;
+                          return (
                           <li key={lesson.id}>
                             <button
-                              onClick={() => handleLessonClick(module.module_order, lesson.lesson_order)}
+                              onClick={() => handleLessonClick(module.module_order, lesson.lesson_order, isFree)}
                               className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-secondary/50 transition-colors text-left"
                             >
-                              <Play className="h-4 w-4 text-muted-foreground" />
-                              <span className="flex-1">{lesson.title}</span>
+                              {isFree ? (
+                                <Play className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <Lock className="h-4 w-4 text-muted-foreground/60" />
+                              )}
+                              <span className={`flex-1 ${!isFree ? 'text-muted-foreground/70' : ''}`}>{lesson.title}</span>
+                              {isFree && (
+                                <Badge variant="secondary" className="text-xs">Free</Badge>
+                              )}
                               {lesson.duration_sec && (
                                 <span className="text-sm text-muted-foreground">
                                   {Math.ceil(lesson.duration_sec / 60)} min
@@ -198,7 +204,8 @@ export default function CourseDetailPage() {
                               )}
                             </button>
                           </li>
-                        ))}
+                          );
+                        })}
                       </ul>
                     </AccordionContent>
                   </AccordionItem>
@@ -226,7 +233,7 @@ export default function CourseDetailPage() {
 
       <Footer />
 
-      {/* Login Prompt Dialog */}
+      {/* Login Prompt Dialog - only for write actions */}
       <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -258,6 +265,42 @@ export default function CourseDetailPage() {
               }}
             >
               Registrovať sa
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Locked Lesson Dialog - for non-free lessons */}
+      <Dialog open={showLockedDialog} onOpenChange={setShowLockedDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5" />
+              Táto lekcia je zamknutá
+            </DialogTitle>
+            <DialogDescription>
+              Táto lekcia je súčasťou plateného obsahu. Pre prístup k všetkým lekciám si zakúpte plný prístup ku kurzu.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col sm:flex-row gap-3 mt-4">
+            <Button 
+              variant="gradient" 
+              className="flex-1"
+              onClick={() => {
+                setShowLockedDialog(false);
+                // TODO: navigate to purchase page when available
+                navigate(`/kurzy/${courseSlug}`);
+              }}
+            >
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              Kúpiť kurz
+            </Button>
+            <Button 
+              variant="outline" 
+              className="flex-1"
+              onClick={() => setShowLockedDialog(false)}
+            >
+              Zavrieť
             </Button>
           </div>
         </DialogContent>

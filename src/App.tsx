@@ -8,6 +8,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ScrollToTop } from "@/components/ScrollToTop";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -37,6 +38,7 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
+              <ScrollToTop />
               <ErrorBoundary>
                 <Routes>
                   {/* Public routes */}
@@ -67,20 +69,16 @@ const App = () => (
                     </ProtectedRoute>
                   } />
                   <Route path="/learn/:courseSlug/:moduleOrder/:lessonOrder" element={
-                    <ProtectedRoute>
-                      <ErrorBoundary fallbackUrl="/kurzy">
-                        <LessonPage />
-                      </ErrorBoundary>
-                    </ProtectedRoute>
+                    <ErrorBoundary fallbackUrl="/kurzy">
+                      <LessonPage />
+                    </ErrorBoundary>
                   } />
                   
                   {/* Legacy routes - redirect to new paths */}
                   <Route path="/courses" element={<CoursesPage />} />
                   <Route path="/courses/:courseSlug" element={<CourseDetailPage />} />
                   <Route path="/courses/:courseId/modules/:moduleId/lessons/:lessonId" element={
-                    <ProtectedRoute>
-                      <LessonRedirect />
-                    </ProtectedRoute>
+                    <LessonRedirect />
                   } />
                   <Route path="/signup" element={<RegisterPage />} />
                   
