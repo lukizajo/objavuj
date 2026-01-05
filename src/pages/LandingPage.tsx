@@ -10,14 +10,16 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { CookieConsent } from '@/components/CookieConsent';
 
-// Aurora Background Component
-function AuroraBackground() {
+// Starfield Background Component
+function StarfieldBackground() {
   return (
-    <div className="aurora-bg">
-      <div className="aurora-blob aurora-blob-1" />
-      <div className="aurora-blob aurora-blob-2" />
-      <div className="aurora-blob aurora-blob-3" />
-      <div className="aurora-blob aurora-blob-4" />
+    <div className="starfield-bg">
+      {/* Nebula depth layer */}
+      <div className="nebula-layer" />
+      {/* Star layers with parallax */}
+      <div className="stars-layer stars-far" />
+      <div className="stars-layer stars-mid" />
+      <div className="stars-layer stars-near" />
     </div>
   );
 }
@@ -133,7 +135,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen relative text-white">
-      <AuroraBackground />
+      <StarfieldBackground />
       
       {/* Content wrapper */}
       <div className="relative z-10">
