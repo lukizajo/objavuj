@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Check, Home, BookOpen, Trophy, Lock, ShoppingCart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Home, BookOpen, Trophy, Lock, ShoppingCart, Volume2, VolumeX } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLesson, useLessonGating } from '@/hooks/useCourseData';
@@ -404,45 +404,52 @@ export default function LessonPage() {
             
             {/* Main content */}
             <div className="flex-1 max-w-3xl">
-              {/* Breadcrumbs */}
-              <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6 flex-wrap">
-                <Link to="/kurzy" className="hover:text-foreground transition-colors">
-                  Kurzy
-                </Link>
-                <ChevronRight className="h-4 w-4 flex-shrink-0" />
-                <Link 
-                  to={`/kurzy/${courseSlug}`} 
-                  className="hover:text-foreground transition-colors truncate max-w-[150px]"
-                  title={course.title}
-                >
-                  {course.title}
-                </Link>
-                <ChevronRight className="h-4 w-4 flex-shrink-0" />
-                <span className="truncate max-w-[120px]" title={module.title}>
-                  {module.title}
-                </span>
-                <ChevronRight className="h-4 w-4 flex-shrink-0" />
-                <span className="text-foreground truncate max-w-[150px]" title={lesson.title}>
-                  {lesson.title}
-                </span>
-              </nav>
-
-              {/* Header */}
-              <div className="mb-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="secondary">
-                    {currentLessonIndex}/{totalLessons}
+              {/* Sticky Header with Audio Player above Title */}
+              <div className="sticky top-20 z-10 bg-background/95 backdrop-blur-sm py-4 -mx-4 px-4 border-b border-border/30 mb-6">
+                {/* Audio Player - above title */}
+                {(() => {
+                  const audioTile = tiles.find(t => t.tile_type === 'audio');
+                  const audioUrl = audioTile?.media_url;
+                  
+                  if (audioUrl) {
+                    return (
+                      <div className="mb-3">
+                        <AudioPlayer 
+                          audioUrl={audioUrl}
+                          transcript={null}
+                          initialTime={progress?.last_position_sec ?? 0}
+                        />
+                      </div>
+                    );
+                  }
+                  
+                  return (
+                    <div className="mb-3 flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-border/30">
+                      <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                        <VolumeX className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Je mi to ľúto, ale v tejto lekcii sa počuť nebudeme. 🥺
+                      </p>
+                    </div>
+                  );
+                })()}
+                
+                {/* Title */}
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="bg-primary text-primary-foreground">
+                    {lessonOrderNum}
                   </Badge>
+                  <h1 className="text-xl sm:text-2xl font-display font-bold truncate">
+                    {lesson.title}
+                  </h1>
                   {isCompleted && (
-                    <Badge className="bg-success/20 text-success border-success/30">
+                    <Badge className="bg-success/20 text-success border-success/30 flex-shrink-0">
                       <Check className="h-3 w-3 mr-1" />
                       {t.lesson.completed}
                     </Badge>
                   )}
                 </div>
-                <h1 className="text-2xl sm:text-3xl font-display font-bold">
-                  {lesson.title}
-                </h1>
               </div>
 
               {/* Tile-based content (new system) */}

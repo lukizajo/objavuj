@@ -1,5 +1,6 @@
-import { Link, useParams } from 'react-router-dom';
-import { ChevronDown, Check, Play, Lock } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import { ChevronDown, Check, Play, Lock, ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProgress } from '@/hooks/useProgress';
@@ -11,6 +12,15 @@ import {
 } from '@/components/ui/accordion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface Module {
   id: string;
@@ -47,8 +57,10 @@ export function LessonSidebar({
   totalLessons,
   completedCount,
 }: LessonSidebarProps) {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { data: userProgress } = useUserProgress();
+  const [showLockedModal, setShowLockedModal] = useState(false);
   
   const progressPercent = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
   
@@ -58,94 +70,149 @@ export function LessonSidebar({
 
   const currentModuleId = modules.find(m => m.module_order === currentModuleOrder)?.id;
 
+  const handleLessonClick = (e: React.MouseEvent, lesson: Lesson, moduleOrder: number) => {
+    if (!lesson.is_free) {
+      e.preventDefault();
+      setShowLockedModal(true);
+    }
+  };
+
   return (
-    <aside className="w-80 flex-shrink-0 hidden lg:block">
-      <div className="sticky top-24 glass-card rounded-xl border border-border/40 overflow-hidden">
-        {/* Course header */}
-        <div className="p-4 border-b border-border/40">
-          <Link 
-            to={`/kurzy/${courseSlug}`}
-            className="text-sm font-medium text-foreground hover:text-primary transition-colors line-clamp-2"
-          >
-            {courseTitle}
-          </Link>
-          <div className="mt-3 space-y-2">
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Postup</span>
-              <span>{completedCount}/{totalLessons} lekcií</span>
+    <>
+      <aside className="w-80 flex-shrink-0 hidden lg:block">
+        <div className="sticky top-24 glass-card rounded-xl border border-border/40 overflow-hidden">
+          {/* Course header */}
+          <div className="p-4 border-b border-border/40">
+            <Link 
+              to={`/kurzy/${courseSlug}`}
+              className="text-sm font-medium text-foreground hover:text-primary transition-colors line-clamp-2"
+            >
+              {courseTitle}
+            </Link>
+            <div className="mt-3 space-y-2">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Postup</span>
+                <span>{completedCount}/{totalLessons} lekcií</span>
+              </div>
+              <Progress value={progressPercent} className="h-2" />
             </div>
-            <Progress value={progressPercent} className="h-2" />
           </div>
-        </div>
-        
-        {/* Modules accordion */}
-        <ScrollArea className="h-[calc(100vh-280px)]">
-          <Accordion 
-            type="single" 
-            collapsible 
-            defaultValue={currentModuleId}
-            className="px-2 py-2"
-          >
-            {modules.map((module) => (
-              <AccordionItem 
-                key={module.id} 
-                value={module.id}
-                className="border-none"
-              >
-                <AccordionTrigger className="hover:no-underline px-3 py-2 rounded-lg hover:bg-secondary/50 text-sm font-medium">
-                  <div className="flex items-center gap-2 text-left">
-                    <span className="text-xs text-muted-foreground min-w-[20px]">
-                      {module.module_order}.
-                    </span>
-                    <span className="line-clamp-2">{module.title}</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pb-2">
-                  <ul className="space-y-1 pl-2">
-                    {module.lessons.map((lesson) => {
-                      const isActive = module.module_order === currentModuleOrder && 
-                                      lesson.lesson_order === currentLessonOrder;
-                      const isCompleted = isLessonCompleted(lesson.id);
-                      const canAccess = user || lesson.is_free;
-                      
-                      return (
-                        <li key={lesson.id}>
-                          <Link
-                            to={`/learn/${courseSlug}/${module.module_order}/${lesson.lesson_order}`}
-                            className={cn(
-                              "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors",
-                              isActive 
-                                ? "bg-primary/10 text-primary font-medium" 
-                                : canAccess
-                                  ? "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                                  : "text-muted-foreground/60 hover:bg-secondary/30"
-                            )}
-                          >
-                            <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
-                              {isCompleted ? (
-                                <Check className="h-4 w-4 text-success" />
-                              ) : !canAccess ? (
-                                <Lock className="h-3 w-3" />
-                              ) : isActive ? (
-                                <Play className="h-3 w-3 text-primary" />
-                              ) : (
-                                <span className="text-xs text-muted-foreground">
-                                  {lesson.lesson_order}
-                                </span>
+          
+          {/* Modules accordion */}
+          <ScrollArea className="h-[calc(100vh-280px)]">
+            <Accordion 
+              type="single" 
+              collapsible 
+              defaultValue={currentModuleId}
+              className="px-2 py-2"
+            >
+              {modules.map((module) => (
+                <AccordionItem 
+                  key={module.id} 
+                  value={module.id}
+                  className="border-none"
+                >
+                  <AccordionTrigger className="hover:no-underline px-3 py-2 rounded-lg hover:bg-secondary/50 text-sm font-medium">
+                    <div className="flex items-center gap-2 text-left">
+                      <span className="text-xs text-muted-foreground min-w-[20px]">
+                        {module.module_order}.
+                      </span>
+                      <span className="line-clamp-2">{module.title}</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-2">
+                    <ul className="space-y-1 pl-2">
+                      {module.lessons.map((lesson) => {
+                        const isActive = module.module_order === currentModuleOrder && 
+                                        lesson.lesson_order === currentLessonOrder;
+                        const isCompleted = isLessonCompleted(lesson.id);
+                        const isFree = lesson.is_free;
+                        
+                        return (
+                          <li key={lesson.id}>
+                            <Link
+                              to={isFree ? `/learn/${courseSlug}/${module.module_order}/${lesson.lesson_order}` : '#'}
+                              onClick={(e) => handleLessonClick(e, lesson, module.module_order)}
+                              className={cn(
+                                "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors",
+                                isActive 
+                                  ? "bg-primary/10 text-primary font-medium" 
+                                  : isFree
+                                    ? "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                                    : "text-muted-foreground/60 hover:bg-secondary/30 cursor-pointer"
                               )}
-                            </span>
-                            <span className="line-clamp-2 text-left">{lesson.title}</span>
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </ScrollArea>
-      </div>
-    </aside>
+                            >
+                              <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
+                                {isCompleted ? (
+                                  <Check className="h-4 w-4 text-success" />
+                                ) : !isFree ? (
+                                  <Lock className="h-3 w-3" />
+                                ) : isActive ? (
+                                  <Play className="h-3 w-3 text-primary" />
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">
+                                    {lesson.lesson_order}
+                                  </span>
+                                )}
+                              </span>
+                              <span className={cn(
+                                "line-clamp-2 text-left flex-1",
+                                !isFree && "blur-[2px] select-none"
+                              )}>
+                                {lesson.title}
+                              </span>
+                              {!isFree && (
+                                <Badge variant="outline" className="text-[10px] opacity-60 flex-shrink-0 px-1">
+                                  <Lock className="h-2 w-2" />
+                                </Badge>
+                              )}
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </ScrollArea>
+        </div>
+      </aside>
+
+      {/* Locked Lesson Modal */}
+      <Dialog open={showLockedModal} onOpenChange={setShowLockedModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5" />
+              Táto lekcia je zamknutá
+            </DialogTitle>
+            <DialogDescription>
+              Táto lekcia je súčasťou plateného obsahu. Pre prístup k všetkým lekciám si zakúpte plný prístup ku kurzu.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col sm:flex-row gap-3 mt-4">
+            <Button 
+              variant="gradient" 
+              className="flex-1"
+              onClick={() => {
+                setShowLockedModal(false);
+                navigate(`/kurzy/${courseSlug}`);
+              }}
+            >
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              Kúpiť kurz
+            </Button>
+            <Button 
+              variant="outline" 
+              className="flex-1"
+              onClick={() => setShowLockedModal(false)}
+            >
+              Zavrieť
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
