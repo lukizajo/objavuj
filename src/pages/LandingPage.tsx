@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useRef, useMemo } from 'react';
+import { useMemo } from 'react';
 import { ArrowRight, Sparkles, Headphones, ClipboardList, BarChart3, Zap, ChevronRight, CheckCircle2, MessageCircle, ExternalLink } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,140 +8,32 @@ import { useCourseProgress } from '@/hooks/useProgress';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { CookieConsent } from '@/components/CookieConsent';
-import { Badge } from '@/components/ui/badge';
 
-// Generate star positions deterministically
-function generateStars(count: number) {
-  const stars = [];
-  for (let i = 0; i < count; i++) {
-    stars.push({
-      id: i,
-      left: `${(i * 7.3) % 100}%`,
-      top: `${(i * 11.7) % 100}%`,
-      delay: `${(i * 0.3) % 4}s`,
-      size: i % 5 === 0 ? 3 : i % 3 === 0 ? 2.5 : 2,
-    });
-  }
-  return stars;
-}
-
-// Cosmic background component
-function CosmicBackground() {
-  const stars = useMemo(() => generateStars(50), []);
-  
+// Living background with luminous gradient
+function LivingBackground() {
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden">
-      {/* Base gradient */}
-      <div className="absolute inset-0 dawn-space-bg" />
-      
-      {/* Dawn light overlay */}
-      <div className="dawn-light-overlay" />
-      
-      {/* Nebula clouds */}
-      <div 
-        className="nebula-cloud"
-        style={{
-          width: '600px',
-          height: '400px',
-          left: '-10%',
-          top: '20%',
-          background: 'radial-gradient(ellipse, rgba(140, 100, 200, 0.15) 0%, transparent 70%)',
-          animationDelay: '0s',
-        }}
-      />
-      <div 
-        className="nebula-cloud"
-        style={{
-          width: '500px',
-          height: '350px',
-          right: '-5%',
-          top: '40%',
-          background: 'radial-gradient(ellipse, rgba(100, 140, 200, 0.12) 0%, transparent 70%)',
-          animationDelay: '-20s',
-        }}
-      />
-      <div 
-        className="nebula-cloud"
-        style={{
-          width: '700px',
-          height: '500px',
-          left: '30%',
-          bottom: '5%',
-          background: 'radial-gradient(ellipse, rgba(200, 140, 160, 0.1) 0%, transparent 70%)',
-          animationDelay: '-40s',
-        }}
-      />
-      
-      {/* Stars */}
-      <div className="star-field">
-        {stars.map((star) => (
-          <div
-            key={star.id}
-            className="star"
-            style={{
-              left: star.left,
-              top: star.top,
-              width: `${star.size}px`,
-              height: `${star.size}px`,
-              animationDelay: star.delay,
-            }}
-          />
-        ))}
-      </div>
-      
-      {/* Glowing points */}
-      <div 
-        className="glow-point"
-        style={{
-          width: '6px',
-          height: '6px',
-          left: '15%',
-          top: '25%',
-          background: 'rgba(180, 160, 255, 0.8)',
-          animationDelay: '0s',
-        }}
-      />
-      <div 
-        className="glow-point"
-        style={{
-          width: '4px',
-          height: '4px',
-          right: '20%',
-          top: '35%',
-          background: 'rgba(160, 200, 255, 0.7)',
-          animationDelay: '-2s',
-        }}
-      />
-      <div 
-        className="glow-point"
-        style={{
-          width: '5px',
-          height: '5px',
-          left: '70%',
-          top: '60%',
-          background: 'rgba(200, 180, 220, 0.6)',
-          animationDelay: '-4s',
-        }}
-      />
+    <div className="fixed inset-0 pointer-events-none">
+      <div className="living-bg" />
+      <div className="luminous-overlay" />
     </div>
   );
 }
 
-// Glass Panel component
+// True Glass Panel - translucent, reveals background
 interface GlassPanelProps {
   children: React.ReactNode;
   className?: string;
-  variant?: 'default' | 'elevated' | 'recessed';
+  variant?: 'default' | 'elevated' | 'subtle';
   hover?: boolean;
 }
 
 function GlassPanel({ children, className = '', variant = 'default', hover = false }: GlassPanelProps) {
   const baseClass = variant === 'elevated' 
-    ? 'dawn-glass-elevated' 
-    : variant === 'recessed' 
-    ? 'dawn-glass-recessed' 
-    : 'dawn-glass';
-  const hoverClass = hover ? 'dawn-glass-hover' : '';
+    ? 'true-glass-elevated' 
+    : variant === 'subtle' 
+    ? 'true-glass-subtle' 
+    : 'true-glass';
+  const hoverClass = hover ? 'true-glass-hover' : '';
   
   return (
     <div className={`${baseClass} ${hoverClass} ${className}`}>
@@ -150,11 +42,11 @@ function GlassPanel({ children, className = '', variant = 'default', hover = fal
   );
 }
 
-// Glass Button component
+// Glass Pill Button
 interface GlassButtonProps {
   children: React.ReactNode;
   onClick?: () => void;
-  variant?: 'glass' | 'primary';
+  variant?: 'glass' | 'accent';
   size?: 'md' | 'lg' | 'xl';
   className?: string;
 }
@@ -166,12 +58,12 @@ function GlassButton({ children, onClick, variant = 'glass', size = 'md', classN
     xl: 'px-8 py-4 text-lg',
   };
   
-  const variantClass = variant === 'primary' ? 'dawn-primary-button' : 'dawn-glass-button';
+  const variantClass = variant === 'accent' ? 'accent-cta' : 'glass-pill';
   
   return (
     <button
       onClick={onClick}
-      className={`${variantClass} ${sizeClasses[size]} rounded-xl font-semibold text-white flex items-center justify-center gap-2 ${className}`}
+      className={`${variantClass} ${sizeClasses[size]} font-semibold text-white flex items-center justify-center gap-2 ${className}`}
     >
       {children}
     </button>
@@ -184,14 +76,6 @@ export default function LandingPage() {
   const { user } = useAuth();
   const { data: courseData } = useCourseWithModulesAndLessons('zaklady-ai');
   const { data: progressData } = useCourseProgress('zaklady-ai');
-
-  const handlePrimaryCta = () => {
-    if (user) {
-      navigate('/dashboard');
-    } else {
-      navigate('/register');
-    }
-  };
 
   const handleContinueCta = () => {
     if (progressData?.nextLesson) {
@@ -217,37 +101,37 @@ export default function LandingPage() {
 
   return (
     <div className="relative min-h-screen">
-      <CosmicBackground />
+      <LivingBackground />
       
       <div className="relative z-10">
         <Navbar />
         
         {/* Hero Section */}
-        <section className="relative pt-32 pb-20 md:pt-44 md:pb-36 overflow-hidden">
+        <section className="relative pt-32 pb-20 md:pt-44 md:pb-36">
           <div className="container relative mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
-              <GlassPanel className="inline-block px-4 py-2 mb-8" variant="recessed">
-                <span className="dawn-text text-sm font-medium tracking-wide">
+              <GlassPanel className="inline-block px-4 py-2 mb-8" variant="subtle">
+                <span className="glass-text-muted text-sm font-medium tracking-wide">
                   Pilotny kurz zdarma
                 </span>
               </GlassPanel>
               
-              <h1 className="text-5xl md:text-7xl font-display font-bold mb-8 leading-tight animate-fade-in">
-                <span className="dawn-gradient-text">{t.hero.title}</span>
+              <h1 className="text-5xl md:text-7xl font-display font-bold mb-8 leading-tight animate-fade-in glass-heading">
+                {t.hero.title}
               </h1>
               
-              <p className="text-xl md:text-2xl dawn-text mb-12 max-w-2xl mx-auto leading-relaxed animate-slide-up">
+              <p className="text-xl md:text-2xl glass-text mb-12 max-w-2xl mx-auto leading-relaxed animate-slide-up">
                 {t.hero.subtitle}
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up" style={{ animationDelay: '0.1s' }}>
                 {user && progressData && progressData.completed > 0 ? (
-                  <GlassButton size="xl" variant="primary" onClick={handleContinueCta}>
+                  <GlassButton size="xl" variant="accent" onClick={handleContinueCta}>
                     {t.hero.ctaContinue}
                     <ArrowRight className="h-5 w-5" />
                   </GlassButton>
                 ) : (
-                  <GlassButton size="xl" variant="primary" onClick={() => navigate('/kurzy/objavuj-ai')}>
+                  <GlassButton size="xl" variant="accent" onClick={() => navigate('/kurzy/objavuj-ai')}>
                     {t.hero.cta}
                     <ArrowRight className="h-5 w-5" />
                   </GlassButton>
@@ -263,7 +147,7 @@ export default function LandingPage() {
         {/* Benefits Section */}
         <section className="py-20 md:py-32 relative">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl md:text-5xl font-display dawn-heading text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-display glass-heading text-center mb-16">
               {t.benefits.title}
             </h2>
             
@@ -275,11 +159,11 @@ export default function LandingPage() {
                   className="p-6"
                   variant={index === 0 ? 'elevated' : 'default'}
                 >
-                  <div className="h-12 w-12 rounded-xl dawn-primary-button flex items-center justify-center mb-5">
+                  <div className="h-12 w-12 rounded-xl accent-cta flex items-center justify-center mb-5">
                     <benefit.icon className="h-6 w-6 text-white" />
                   </div>
-                  <h3 className="text-lg font-semibold dawn-heading mb-3">{benefit.title}</h3>
-                  <p className="dawn-text-muted leading-relaxed">{benefit.desc}</p>
+                  <h3 className="text-lg font-semibold glass-heading mb-3">{benefit.title}</h3>
+                  <p className="glass-text-muted leading-relaxed">{benefit.desc}</p>
                 </GlassPanel>
               ))}
             </div>
@@ -290,7 +174,7 @@ export default function LandingPage() {
         {courseData && (
           <section className="py-20 md:py-32 relative">
             <div className="container mx-auto px-4">
-              <h2 className="text-3xl md:text-5xl font-display dawn-heading text-center mb-16">
+              <h2 className="text-3xl md:text-5xl font-display glass-heading text-center mb-16">
                 {t.coursePreview.title}
               </h2>
               
@@ -298,35 +182,34 @@ export default function LandingPage() {
                 <GlassPanel variant="elevated" className="p-8 md:p-10">
                   <div className="flex items-start justify-between mb-6">
                     <div>
-                      <GlassPanel variant="recessed" className="inline-block px-3 py-1.5 mb-4">
-                        <span className="dawn-text text-sm font-medium">{t.coursePreview.freeBadge}</span>
+                      <GlassPanel variant="subtle" className="inline-block px-3 py-1.5 mb-4">
+                        <span className="accent-text text-sm font-medium">{t.coursePreview.freeBadge}</span>
                       </GlassPanel>
-                      <h3 className="text-2xl md:text-3xl font-display dawn-heading">{courseData.course.title}</h3>
-                      <p className="dawn-text mt-3 leading-relaxed">{courseData.course.description}</p>
+                      <h3 className="text-2xl md:text-3xl font-display glass-heading">{courseData.course.title}</h3>
+                      <p className="glass-text mt-3 leading-relaxed">{courseData.course.description}</p>
                     </div>
                   </div>
                   
-                  <div className="flex gap-4 text-sm dawn-text-muted mb-8">
+                  <div className="flex gap-4 text-sm glass-text-muted mb-8">
                     <span>{courseData.modules.length} {t.coursePreview.modules}</span>
                     <span className="opacity-50">|</span>
                     <span>{courseData.totalLessons} {t.coursePreview.lessons}</span>
                   </div>
                   
                   <div className="space-y-3 mb-8">
-                    {courseData.modules.slice(0, 3).map((module, idx) => (
+                    {courseData.modules.slice(0, 3).map((module) => (
                       <GlassPanel 
                         key={module.id} 
-                        variant="recessed" 
+                        variant="subtle" 
                         className="p-4 flex items-center justify-between"
-                        style={{ transform: `translateZ(${(3 - idx) * 10}px)` } as React.CSSProperties}
                       >
                         <div className="flex items-center gap-4">
-                          <div className="h-10 w-10 rounded-full dawn-glass-button flex items-center justify-center text-sm font-semibold text-white">
+                          <div className="h-10 w-10 rounded-full glass-pill flex items-center justify-center text-sm font-semibold text-white">
                             {module.module_order}
                           </div>
-                          <span className="font-medium dawn-heading">{module.title}</span>
+                          <span className="font-medium glass-heading">{module.title}</span>
                         </div>
-                        <span className="text-sm dawn-text-muted">
+                        <span className="text-sm glass-text-muted">
                           {module.lessons.length} {t.coursePreview.lessons}
                         </span>
                       </GlassPanel>
@@ -334,7 +217,7 @@ export default function LandingPage() {
                   </div>
                   
                   <GlassButton 
-                    variant="primary" 
+                    variant="accent" 
                     size="lg" 
                     onClick={() => navigate('/kurzy/objavuj-ai')}
                     className="w-full"
@@ -351,21 +234,21 @@ export default function LandingPage() {
         {/* How it works Section */}
         <section className="py-20 md:py-32 relative">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl md:text-5xl font-display dawn-heading text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-display glass-heading text-center mb-16">
               {t.howItWorks.title}
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
               {steps.map((step, index) => (
                 <div key={index} className="relative text-center">
-                  <div className="text-7xl font-display font-bold mb-6" style={{ color: 'rgba(140, 160, 255, 0.15)' }}>
+                  <div className="text-7xl font-display font-bold mb-6 accent-text opacity-20">
                     {step.step}
                   </div>
-                  <h3 className="text-xl font-semibold dawn-heading mb-3">{step.title}</h3>
-                  <p className="dawn-text-muted leading-relaxed">{step.desc}</p>
+                  <h3 className="text-xl font-semibold glass-heading mb-3">{step.title}</h3>
+                  <p className="glass-text-muted leading-relaxed">{step.desc}</p>
                   
                   {index < steps.length - 1 && (
-                    <ChevronRight className="hidden md:block absolute top-10 -right-4 h-8 w-8" style={{ color: 'rgba(140, 160, 255, 0.3)' }} />
+                    <ChevronRight className="hidden md:block absolute top-10 -right-4 h-8 w-8 accent-text opacity-30" />
                   )}
                 </div>
               ))}
@@ -376,7 +259,7 @@ export default function LandingPage() {
         {/* What you get Section */}
         <section className="py-20 md:py-32 relative">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl md:text-5xl font-display dawn-heading text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-display glass-heading text-center mb-16">
               {t.whatYouGet.title}
             </h2>
             
@@ -386,9 +269,9 @@ export default function LandingPage() {
                   {t.whatYouGet.items.map((item, index) => (
                     <li key={index} className="flex items-start gap-4">
                       <div className="flex-shrink-0 mt-0.5">
-                        <CheckCircle2 className="h-5 w-5" style={{ color: 'rgba(120, 200, 150, 0.9)' }} />
+                        <CheckCircle2 className="h-5 w-5 accent-text" />
                       </div>
-                      <span className="dawn-text leading-relaxed">{item}</span>
+                      <span className="glass-text leading-relaxed">{item}</span>
                     </li>
                   ))}
                 </ul>
@@ -401,26 +284,14 @@ export default function LandingPage() {
         <section className="py-20 md:py-32 relative">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto relative">
-              {/* Background floating panels for depth */}
-              <GlassPanel 
-                variant="recessed" 
-                className="absolute -left-8 top-1/4 w-32 h-24 opacity-50 hidden lg:block"
-                style={{ transform: 'rotate(-6deg) translateZ(-20px)' }}
-              />
-              <GlassPanel 
-                variant="recessed" 
-                className="absolute -right-8 bottom-1/4 w-28 h-20 opacity-40 hidden lg:block"
-                style={{ transform: 'rotate(4deg) translateZ(-30px)' }}
-              />
-              
               <GlassPanel variant="elevated" className="p-10 md:p-12 text-center relative z-10">
-                <div className="h-16 w-16 rounded-2xl dawn-glass-button flex items-center justify-center mx-auto mb-8">
-                  <MessageCircle className="h-8 w-8" style={{ color: 'rgba(160, 140, 255, 0.9)' }} />
+                <div className="h-16 w-16 rounded-2xl glass-pill flex items-center justify-center mx-auto mb-8">
+                  <MessageCircle className="h-8 w-8 accent-text" />
                 </div>
-                <h2 className="text-3xl md:text-4xl font-display dawn-heading mb-5">
+                <h2 className="text-3xl md:text-4xl font-display glass-heading mb-5">
                   {t.podcast.title}
                 </h2>
-                <p className="dawn-text mb-10 max-w-lg mx-auto leading-relaxed">
+                <p className="glass-text mb-10 max-w-lg mx-auto leading-relaxed">
                   {t.podcast.description}
                 </p>
                 <GlassButton size="lg" variant="glass" onClick={() => navigate('/podcast')}>
@@ -436,27 +307,27 @@ export default function LandingPage() {
         <section className="py-20 md:py-36 relative">
           <div className="container mx-auto px-4">
             <GlassPanel variant="elevated" className="max-w-4xl mx-auto p-10 md:p-16 text-center">
-              <h2 className="text-3xl md:text-5xl font-display dawn-heading mb-6 leading-tight">
+              <h2 className="text-3xl md:text-5xl font-display glass-heading mb-6 leading-tight">
                 {t.finalCta.title}
               </h2>
-              <p className="text-xl dawn-text mb-12 max-w-lg mx-auto leading-relaxed">
+              <p className="text-xl glass-text mb-12 max-w-lg mx-auto leading-relaxed">
                 {t.finalCta.subtitle}
               </p>
               
               {user ? (
                 progressData && progressData.completed > 0 ? (
-                  <GlassButton size="xl" variant="primary" onClick={handleContinueCta}>
+                  <GlassButton size="xl" variant="accent" onClick={handleContinueCta}>
                     {t.hero.ctaContinue}
                     <ArrowRight className="h-5 w-5" />
                   </GlassButton>
                 ) : (
-                  <GlassButton size="xl" variant="primary" onClick={() => navigate('/learn/zaklady-ai/1/1')}>
+                  <GlassButton size="xl" variant="accent" onClick={() => navigate('/learn/zaklady-ai/1/1')}>
                     {t.hero.ctaStart}
                     <ArrowRight className="h-5 w-5" />
                   </GlassButton>
                 )
               ) : (
-                <GlassButton size="xl" variant="primary" onClick={() => navigate('/kurzy/objavuj-ai')}>
+                <GlassButton size="xl" variant="accent" onClick={() => navigate('/kurzy/objavuj-ai')}>
                   {t.finalCta.ctaStart}
                   <ArrowRight className="h-5 w-5" />
                 </GlassButton>
