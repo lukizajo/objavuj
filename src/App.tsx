@@ -67,20 +67,16 @@ const App = () => (
                     </ProtectedRoute>
                   } />
                   <Route path="/learn/:courseSlug/:moduleOrder/:lessonOrder" element={
-                    <ProtectedRoute>
-                      <ErrorBoundary fallbackUrl="/kurzy">
-                        <LessonPage />
-                      </ErrorBoundary>
-                    </ProtectedRoute>
+                    <ErrorBoundary fallbackUrl="/kurzy">
+                      <LessonPage />
+                    </ErrorBoundary>
                   } />
                   
                   {/* Legacy routes - redirect to new paths */}
                   <Route path="/courses" element={<CoursesPage />} />
                   <Route path="/courses/:courseSlug" element={<CourseDetailPage />} />
                   <Route path="/courses/:courseId/modules/:moduleId/lessons/:lessonId" element={
-                    <ProtectedRoute>
-                      <LessonRedirect />
-                    </ProtectedRoute>
+                    <LessonRedirect />
                   } />
                   <Route path="/signup" element={<RegisterPage />} />
                   
