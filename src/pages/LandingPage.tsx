@@ -93,7 +93,7 @@ export default function LandingPage() {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               ) : (
-                <Button size="xl" variant="gradient" onClick={handlePrimaryCta}>
+                <Button size="xl" variant="gradient" onClick={() => navigate('/kurzy/objavuj-ai')}>
                   {t.hero.cta}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
@@ -302,7 +302,7 @@ export default function LandingPage() {
               </Button>
             )
           ) : (
-            <Button size="xl" variant="gradient" onClick={() => navigate('/register')}>
+            <Button size="xl" variant="gradient" onClick={() => navigate('/kurzy/objavuj-ai')}>
               {t.finalCta.ctaStart}
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
