@@ -4,7 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* OBJAVUJ-AI Premium Glass Design System */
+/* OBJAVUJ-AI Dawn in Space - Premium Glass Design System */
 
 @layer base {
   :root {
@@ -231,6 +231,222 @@
     @apply h-full rounded-full transition-all duration-500 ease-out;
     background: var(--gradient-primary);
   }
+
+  /* Dawn Space Theme - Cosmic Background */
+  .dawn-space-bg {
+    background: linear-gradient(
+      180deg,
+      hsl(232 47% 18%) 0%,
+      hsl(245 45% 22%) 25%,
+      hsl(255 40% 28%) 50%,
+      hsl(270 35% 25%) 75%,
+      hsl(240 42% 20%) 100%
+    );
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Dawn light gradient overlay */
+  .dawn-light-overlay {
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse 120% 60% at 50% 100%, rgba(255, 180, 140, 0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 50% at 20% 80%, rgba(180, 140, 255, 0.1) 0%, transparent 50%),
+      radial-gradient(ellipse 80% 50% at 80% 70%, rgba(140, 180, 255, 0.08) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  /* Nebula clouds */
+  .nebula-cloud {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.4;
+    animation: nebula-drift 60s ease-in-out infinite;
+  }
+
+  @keyframes nebula-drift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(20px, -15px) scale(1.05); }
+    66% { transform: translate(-15px, 10px) scale(0.95); }
+  }
+
+  /* Star particles */
+  .star-field {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: white;
+    border-radius: 50%;
+    opacity: 0;
+    animation: star-twinkle 4s ease-in-out infinite;
+  }
+
+  @keyframes star-twinkle {
+    0%, 100% { opacity: 0.2; transform: scale(0.8); }
+    50% { opacity: 0.7; transform: scale(1.2); }
+  }
+
+  /* Glowing points */
+  .glow-point {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(2px);
+    animation: glow-pulse 6s ease-in-out infinite;
+  }
+
+  @keyframes glow-pulse {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.3); }
+  }
+
+  /* Dawn Glass Panel */
+  .dawn-glass {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.06) 100%
+    );
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    border-radius: 1.25rem;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dawn-glass-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 
+      0 12px 40px rgba(0, 0, 0, 0.35),
+      0 0 30px rgba(140, 160, 255, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+
+  /* Elevated glass for layered depth */
+  .dawn-glass-elevated {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.15) 0%,
+      rgba(255, 255, 255, 0.08) 100%
+    );
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 
+      0 16px 48px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    border-radius: 1.5rem;
+  }
+
+  /* Recessed glass for background layers */
+  .dawn-glass-recessed {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.06) 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    );
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    border-radius: 1rem;
+  }
+
+  /* Glass button */
+  .dawn-glass-button {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.18) 0%,
+      rgba(255, 255, 255, 0.08) 100%
+    );
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 
+      0 4px 16px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    transition: all 0.3s ease;
+  }
+
+  .dawn-glass-button:hover {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.25) 0%,
+      rgba(255, 255, 255, 0.12) 100%
+    );
+    box-shadow: 
+      0 6px 24px rgba(0, 0, 0, 0.25),
+      0 0 20px rgba(140, 160, 255, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+  }
+
+  /* Primary gradient button for dawn theme */
+  .dawn-primary-button {
+    background: linear-gradient(
+      135deg,
+      hsl(243 75% 60%) 0%,
+      hsl(270 65% 55%) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 
+      0 4px 20px rgba(100, 80, 200, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+  }
+
+  .dawn-primary-button:hover {
+    box-shadow: 
+      0 6px 30px rgba(100, 80, 200, 0.5),
+      0 0 30px rgba(140, 120, 255, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+  }
+
+  /* Typography for dawn theme */
+  .dawn-heading {
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+    letter-spacing: -0.02em;
+    font-weight: 700;
+  }
+
+  .dawn-text {
+    color: rgba(255, 255, 255, 0.75);
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  .dawn-text-muted {
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  /* Gradient text for dawn theme */
+  .dawn-gradient-text {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 1) 0%,
+      rgba(200, 180, 255, 1) 50%,
+      rgba(180, 200, 255, 1) 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 }
 
 @layer utilities {
@@ -280,5 +496,22 @@
   @keyframes float {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-10px); }
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .star,
+    .nebula-cloud,
+    .glow-point,
+    .animate-fade-in,
+    .animate-slide-up,
+    .animate-float {
+      animation: none !important;
+    }
+    .dawn-glass-hover:hover,
+    .dawn-glass-button:hover,
+    .dawn-primary-button:hover {
+      transform: none !important;
+    }
   }
 }
