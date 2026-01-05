@@ -239,6 +239,158 @@
     scroll-behavior: smooth;
   }
 
+  /* Aurora Background */
+  .aurora-bg {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    z-index: 0;
+    background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 25%, #2d1b4e 50%, #1a1a3a 75%, #0a0a1a 100%);
+    background-size: 400% 400%;
+    animation: aurora-shift 45s ease-in-out infinite;
+  }
+
+  .aurora-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.4;
+    mix-blend-mode: screen;
+  }
+
+  .aurora-blob-1 {
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.6) 0%, transparent 70%);
+    top: -10%;
+    left: -10%;
+    animation: blob-float-1 30s ease-in-out infinite;
+  }
+
+  .aurora-blob-2 {
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.5) 0%, transparent 70%);
+    top: 30%;
+    right: -5%;
+    animation: blob-float-2 35s ease-in-out infinite;
+  }
+
+  .aurora-blob-3 {
+    width: 450px;
+    height: 450px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, transparent 70%);
+    bottom: -10%;
+    left: 20%;
+    animation: blob-float-3 40s ease-in-out infinite;
+  }
+
+  .aurora-blob-4 {
+    width: 350px;
+    height: 350px;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.35) 0%, transparent 70%);
+    top: 60%;
+    left: 50%;
+    animation: blob-float-4 32s ease-in-out infinite;
+  }
+
+  @keyframes aurora-shift {
+    0%, 100% { background-position: 0% 50%; }
+    25% { background-position: 100% 50%; }
+    50% { background-position: 100% 100%; }
+    75% { background-position: 0% 100%; }
+  }
+
+  @keyframes blob-float-1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(100px, 50px) scale(1.1); }
+    66% { transform: translate(50px, 100px) scale(0.95); }
+  }
+
+  @keyframes blob-float-2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(-80px, 60px) scale(1.05); }
+    66% { transform: translate(-40px, -40px) scale(0.9); }
+  }
+
+  @keyframes blob-float-3 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(60px, -80px) scale(1.08); }
+    66% { transform: translate(-60px, -40px) scale(0.92); }
+  }
+
+  @keyframes blob-float-4 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-100px, 50px) scale(1.15); }
+  }
+
+  /* Premium Glass Card */
+  .glass-premium {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 1.5rem;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-premium:hover {
+    transform: translateY(-4px);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 60px rgba(139, 92, 246, 0.15);
+  }
+
+  /* Glass Pill Button */
+  .glass-pill {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 9999px;
+    padding: 1rem 2rem;
+    font-weight: 500;
+    color: white;
+    transition: all 0.3s ease;
+  }
+
+  .glass-pill:hover {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 8px 32px rgba(139, 92, 246, 0.25);
+    transform: translateY(-2px);
+  }
+
+  .glass-pill-primary {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.8) 0%, rgba(139, 92, 246, 0.8) 100%);
+    border-color: rgba(139, 92, 246, 0.4);
+  }
+
+  .glass-pill-primary:hover {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.95) 0%, rgba(139, 92, 246, 0.95) 100%);
+    box-shadow: 0 8px 32px rgba(139, 92, 246, 0.4);
+  }
+
+  /* Glass Modal Overlay */
+  .glass-overlay {
+    background: rgba(10, 10, 26, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* Glass Progress Bar */
+  .glass-progress {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 9999px;
+    overflow: hidden;
+  }
+
+  .glass-progress-fill {
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.9) 0%, rgba(168, 85, 247, 0.9) 100%);
+    border-radius: 9999px;
+    transition: width 0.5s ease;
+  }
+
   /* Hide scrollbar */
   .scrollbar-hide {
     -ms-overflow-style: none;
