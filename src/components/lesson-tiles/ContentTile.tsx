@@ -1,5 +1,6 @@
-import { LessonTile, LessonTileData, TILE_ICONS } from './LessonTile';
+import { LessonTileData } from './LessonTile';
 import { MarkdownContent } from '@/components/MarkdownContent';
+import { GlassCard } from '@/components/ui/glass-card';
 
 interface ContentTileProps {
   tile: LessonTileData;
@@ -8,9 +9,10 @@ interface ContentTileProps {
 export function ContentTile({ tile }: ContentTileProps) {
   if (!tile.content_md) return null;
   
+  // Content tile renders only text without title/icon header
   return (
-    <LessonTile icon={tile.icon || TILE_ICONS.content} title={tile.title}>
+    <GlassCard variant="hover">
       <MarkdownContent content={tile.content_md} />
-    </LessonTile>
+    </GlassCard>
   );
 }
