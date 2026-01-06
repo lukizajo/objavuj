@@ -9,6 +9,8 @@ export interface Course {
   slug: string;
   description: string | null;
   image_url: string | null;
+  schema_jsonld?: unknown;
+  is_free?: boolean;
   created_at: string;
 }
 
@@ -18,6 +20,7 @@ export interface Module {
   title: string;
   code?: string;
   module_order: number;
+  is_free?: boolean;
   created_at: string;
 }
 
@@ -36,20 +39,50 @@ export interface Lesson {
   created_at: string;
 }
 
-// LessonTile interface matching DB schema
+// LessonTile interface matching external DB schema (lesson_tiles table)
 export interface LessonTile {
   id: string;
   lesson_id: string;
-  tile_type: TileType;  // content | example | transcript | mini_task | mini_test | media | warning | ethics
+  // External DB uses 'type' and 'position', we map them
+  type: string;
+  position: number;
+  title: string;
+  body_md: string | null;
+  body_json?: unknown;
+  is_required: boolean;
+  icon?: string;
+  created_at?: string;
+}
+
+// Mapped tile data for components (normalized interface)
+export interface MappedLessonTile {
+  id: string;
+  lesson_id: string;
+  tile_type: TileType;
   tile_order: number;
   title: string;
   content_md: string | null;
   is_required: boolean;
   media_url: string | null;
   mini_task_id: string | null;
-  created_at?: string;
-  // Legacy/optional fields for backward compatibility
   icon?: string;
+}
+
+// Map DB tile to component tile
+function mapTileToComponent(tile: LessonTile): MappedLessonTile {
+  const bodyJson = tile.body_json as { media_url?: string; mini_task_id?: string } | null;
+  return {
+    id: tile.id,
+    lesson_id: tile.lesson_id,
+    tile_type: tile.type as TileType,
+    tile_order: tile.position,
+    title: tile.title,
+    content_md: tile.body_md,
+    is_required: tile.is_required,
+    media_url: bodyJson?.media_url ?? null,
+    mini_task_id: bodyJson?.mini_task_id ?? null,
+    icon: tile.icon,
+  };
 }
 
 export function useCourses() {
@@ -272,16 +305,16 @@ export function useLesson(courseSlug: string, moduleOrder: number, lessonOrder: 
         };
       }
       
-      // Step 4: Get lesson tiles - SEPARATE FETCH using tile_order
-      let tiles: LessonTile[] = [];
+      // Step 4: Get lesson tiles - SEPARATE FETCH using position (external DB column)
+      let tiles: MappedLessonTile[] = [];
       const { data: tilesData, error: tilesError } = await supabase
         .from('lesson_tiles')
         .select('*')
         .eq('lesson_id', lesson.id)
-        .order('tile_order', { ascending: true });
+        .order('position', { ascending: true });
       
       if (!tilesError && tilesData) {
-        tiles = tilesData as LessonTile[];
+        tiles = (tilesData as LessonTile[]).map(mapTileToComponent);
       }
       
       // Legacy support: Get task if exists
@@ -336,7 +369,7 @@ export function useLesson(courseSlug: string, moduleOrder: number, lessonOrder: 
 }
 
 // Hook to check if lesson can be unlocked (all required items completed)
-export function useLessonGating(lessonId: string | undefined, requiredTiles: LessonTile[] = []) {
+export function useLessonGating(lessonId: string | undefined, requiredTiles: MappedLessonTile[] = []) {
   return useQuery({
     queryKey: ['lessonGating', lessonId, requiredTiles.map(t => t.id)],
     queryFn: async () => {
@@ -350,7 +383,7 @@ export function useLessonGating(lessonId: string | undefined, requiredTiles: Les
       }
 
       const completedRequired: string[] = [];
-      const missingRequired: LessonTile[] = [];
+      const missingRequired: MappedLessonTile[] = [];
 
       for (const tile of requiredTiles) {
         if (tile.tile_type === 'mini_task') {

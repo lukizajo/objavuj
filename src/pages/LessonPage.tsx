@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Check, Home, BookOpen, Trophy, Lock, ShoppingCart, Volume2, VolumeX } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLesson, useLessonGating } from '@/hooks/useCourseData';
+import { useLesson, useLessonGating, type MappedLessonTile } from '@/hooks/useCourseData';
 import { useLessonProgress, useUpdateProgress, useUserProgress } from '@/hooks/useProgress';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,7 +17,7 @@ import { LessonSidebar } from '@/components/LessonSidebar';
 import { MarkdownContent } from '@/components/MarkdownContent';
 import { AudioPlayer } from '@/components/AudioPlayer';
 import { TileRenderer } from '@/components/lesson-tiles';
-import type { LessonTileData } from '@/components/lesson-tiles';
+// Use MappedLessonTile from useCourseData which is compatible with LessonTileData
 import { useQueryClient } from '@tanstack/react-query';
 
 export default function LessonPage() {
@@ -53,7 +53,7 @@ export default function LessonPage() {
   const { data: progress } = useLessonProgress(lessonId);
   
   // Get gating status
-  const requiredTiles = (data?.requiredTiles ?? []) as LessonTileData[];
+  const requiredTiles = (data?.requiredTiles ?? []) as MappedLessonTile[];
   const { data: gatingData, refetch: refetchGating } = useLessonGating(lessonId, requiredTiles);
   
   // State hooks
@@ -65,7 +65,7 @@ export default function LessonPage() {
   const course = data?.course ?? null;
   const module = data?.module ?? null;
   const lesson = data?.lesson ?? null;
-  const tiles = (data?.tiles ?? []) as LessonTileData[];
+  const tiles = (data?.tiles ?? []) as MappedLessonTile[];
   const allModules = data?.allModules ?? [];
   const allLessons = data?.allLessons ?? [];
   const prevLesson = data?.prevLesson ?? null;

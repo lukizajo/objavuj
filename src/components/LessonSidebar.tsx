@@ -26,7 +26,7 @@ interface Module {
   id: string;
   title: string;
   module_order: number;
-  is_free: boolean;
+  is_free?: boolean;
   lessons: Lesson[];
 }
 

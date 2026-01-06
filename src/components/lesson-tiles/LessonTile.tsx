@@ -1,8 +1,8 @@
 import { GlassCard } from '@/components/ui/glass-card';
 import { cn } from '@/lib/utils';
 
-// Tile types matching DB constraint
-export type TileType = 'content' | 'example' | 'transcript' | 'mini_task' | 'mini_test' | 'media' | 'warning' | 'ethics';
+// Tile types matching DB constraint (includes 'audio' for media player)
+export type TileType = 'content' | 'example' | 'transcript' | 'mini_task' | 'mini_test' | 'media' | 'warning' | 'ethics' | 'audio';
 
 export interface LessonTileData {
   id: string;
@@ -34,6 +34,7 @@ export const TILE_ICONS: Record<TileType, string> = {
   mini_task: '🎓',
   mini_test: '✅',
   media: '🎧',
+  audio: '🎧',
   warning: '⚠️',
   ethics: '🤔',
 };
