@@ -39,19 +39,21 @@ export interface Lesson {
   created_at: string;
 }
 
-// LessonTile interface matching external DB schema (lesson_tiles table)
+// LessonTile interface matching actual DB schema (lesson_tiles table)
 export interface LessonTile {
   id: string;
   lesson_id: string;
-  // External DB uses 'type' and 'position', we map them
-  type: string;
-  position: number;
-  title: string;
-  body_md: string | null;
-  body_json?: unknown;
+  tile_order: number;
+  tile_type: string;
+  title: string | null;
+  content_md: string | null;
+  media_url: string | null;
   is_required: boolean;
-  icon?: string;
-  created_at?: string;
+  estimated_minutes: number | null;
+  mini_task_id: string | null;
+  mini_test_id: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 // Mapped tile data for components (normalized interface)
@@ -65,23 +67,22 @@ export interface MappedLessonTile {
   is_required: boolean;
   media_url: string | null;
   mini_task_id: string | null;
-  icon?: string;
+  mini_test_id: string | null;
 }
 
 // Map DB tile to component tile
 function mapTileToComponent(tile: LessonTile): MappedLessonTile {
-  const bodyJson = tile.body_json as { media_url?: string; mini_task_id?: string } | null;
   return {
     id: tile.id,
     lesson_id: tile.lesson_id,
-    tile_type: tile.type as TileType,
-    tile_order: tile.position,
-    title: tile.title,
-    content_md: tile.body_md,
+    tile_type: tile.tile_type as TileType,
+    tile_order: tile.tile_order,
+    title: tile.title || '',
+    content_md: tile.content_md,
     is_required: tile.is_required,
-    media_url: bodyJson?.media_url ?? null,
-    mini_task_id: bodyJson?.mini_task_id ?? null,
-    icon: tile.icon,
+    media_url: tile.media_url,
+    mini_task_id: tile.mini_task_id,
+    mini_test_id: tile.mini_test_id,
   };
 }
 
@@ -305,16 +306,19 @@ export function useLesson(courseSlug: string, moduleOrder: number, lessonOrder: 
         };
       }
       
-      // Step 4: Get lesson tiles - SEPARATE FETCH using position (external DB column)
+      // Step 4: Get lesson tiles - using tile_order (actual DB column)
       let tiles: MappedLessonTile[] = [];
       const { data: tilesData, error: tilesError } = await supabase
         .from('lesson_tiles')
         .select('*')
         .eq('lesson_id', lesson.id)
-        .order('position', { ascending: true });
+        .order('tile_order', { ascending: true });
       
-      if (!tilesError && tilesData) {
-        tiles = (tilesData as LessonTile[]).map(mapTileToComponent);
+      if (tilesError) {
+        console.error('Tiles fetch error:', tilesError);
+      } else if (tilesData) {
+        // Cast through unknown because types.ts may be outdated
+        tiles = (tilesData as unknown as LessonTile[]).map(mapTileToComponent);
       }
       
       // Legacy support: Get task if exists
