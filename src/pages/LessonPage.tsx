@@ -404,41 +404,42 @@ export default function LessonPage() {
             
             {/* Main content */}
             <div className="flex-1 max-w-3xl">
-              {/* Audio Player - aligned with sidebar top */}
-              {(() => {
-                const audioTile = tiles.find(t => t.tile_type === 'audio');
-                const audioUrl = audioTile?.media_url;
-                
-                if (audioUrl) {
-                  return (
-                    <div className="mb-4">
+              {/* Sticky Header: Audio Player + Lesson Title */}
+              <div className="sticky top-20 z-10 bg-background/95 backdrop-blur-sm pb-4 space-y-3">
+                {/* Audio Player */}
+                {(() => {
+                  const audioTile = tiles.find(t => t.tile_type === 'audio');
+                  const audioUrl = audioTile?.media_url;
+                  
+                  if (audioUrl) {
+                    return (
                       <AudioPlayer 
                         audioUrl={audioUrl}
                         transcript={null}
                         initialTime={progress?.last_position_sec ?? 0}
                       />
+                    );
+                  }
+                  
+                  return (
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-border/30">
+                      <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                        <VolumeX className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Je mi to ľúto, ale v tejto lekcii sa počuť nebudeme. 🥺
+                      </p>
                     </div>
                   );
-                }
+                })()}
                 
-                return (
-                  <div className="mb-4 flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-border/30">
-                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                      <VolumeX className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Je mi to ľúto, ale v tejto lekcii sa počuť nebudeme. 🥺
-                    </p>
-                  </div>
-                );
-              })()}
-              
-              {/* Lesson Title Tile */}
-              <GlassCard variant="hover" className="mb-4">
-                <h1 className="text-2xl font-display font-bold text-foreground">
-                  {lesson.title}
-                </h1>
-              </GlassCard>
+                {/* Lesson Title */}
+                <GlassCard variant="hover" className="!py-3">
+                  <h1 className="text-xl font-display font-bold text-foreground">
+                    {lesson.title}
+                  </h1>
+                </GlassCard>
+              </div>
 
               {/* Tile-based content (new system) */}
               {hasTiles ? (
