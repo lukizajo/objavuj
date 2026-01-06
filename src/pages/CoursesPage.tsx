@@ -16,9 +16,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import type { Database } from '@/integrations/supabase/types';
-
-type Course = Database['public']['Tables']['courses']['Row'];
+import type { Course } from '@/hooks/useCourseData';
 
 export default function CoursesPage() {
   const navigate = useNavigate();

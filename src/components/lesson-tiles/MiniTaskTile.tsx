@@ -29,7 +29,7 @@ export function MiniTaskTile({ tile, lessonId, onComplete }: MiniTaskTileProps) 
   const [miniTask, setMiniTask] = useState<MiniTask | null>(null);
   const [isLoadingTask, setIsLoadingTask] = useState(true);
 
-  // Fetch mini_task data via mini_task_id
+  // Fetch task data from tasks table (not mini_tasks - that table doesn't exist)
   useEffect(() => {
     if (!tile.mini_task_id) {
       setIsLoadingTask(false);
@@ -37,18 +37,25 @@ export function MiniTaskTile({ tile, lessonId, onComplete }: MiniTaskTileProps) 
     }
     
     supabase
-      .from('mini_tasks')
-      .select('id, lesson_id, title, prompt')
+      .from('tasks')
+      .select('id, lesson_id, prompt')
       .eq('id', tile.mini_task_id)
       .maybeSingle()
       .then(({ data, error }) => {
         if (error) {
-          console.error('Error fetching mini_task:', error);
+          console.error('Error fetching task:', error);
         }
-        setMiniTask(data as MiniTask | null);
+        if (data) {
+          setMiniTask({
+            id: data.id,
+            lesson_id: data.lesson_id,
+            title: tile.title, // Use tile title since tasks table doesn't have title
+            prompt: data.prompt,
+          });
+        }
         setIsLoadingTask(false);
       });
-  }, [tile.mini_task_id]);
+  }, [tile.mini_task_id, tile.title]);
 
   // Check if already submitted
   useEffect(() => {
