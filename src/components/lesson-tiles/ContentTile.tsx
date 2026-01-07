@@ -14,10 +14,7 @@ export function ContentTile({ tile }: ContentTileProps) {
   return (
     <GlassCard variant="hover">
       {hasTitle && (
-        <div className="flex items-center gap-3 mb-4">
-          <span className="text-2xl" role="img" aria-label={tile.title}>{tile.icon || TILE_ICONS.content}</span>
-          <h3 className="text-lg font-display font-semibold text-foreground">{tile.title}</h3>
-        </div>
+        <h3 className="text-lg font-display font-semibold text-foreground mb-4">{tile.title}</h3>
       )}
       <MarkdownContent content={tile.content_md} />
     </GlassCard>
