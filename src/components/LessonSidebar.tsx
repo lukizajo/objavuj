@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ChevronDown, Check, Play, Lock, ShoppingCart } from 'lucide-react';
+import { ChevronDown, ChevronRight, Check, Play, Lock, ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProgress } from '@/hooks/useProgress';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Accordion,
   AccordionContent,
@@ -14,6 +16,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import {
   Dialog,
   DialogContent,
@@ -36,6 +43,12 @@ interface Lesson {
   lesson_order: number;
   is_free: boolean;
   duration_sec: number | null;
+}
+
+interface LessonTileBasic {
+  id: string;
+  title: string | null;
+  tile_order: number;
 }
 
 interface LessonSidebarProps {
@@ -61,6 +74,42 @@ export function LessonSidebar({
   const { user } = useAuth();
   const { data: userProgress } = useUserProgress();
   const [showLockedModal, setShowLockedModal] = useState(false);
+  const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
+  
+  // Get all lesson IDs
+  const allLessonIds = modules.flatMap(m => m.lessons.map(l => l.id));
+  
+  // Fetch tiles for all lessons
+  const { data: allTiles } = useQuery({
+    queryKey: ['lesson-tiles-sidebar', allLessonIds],
+    queryFn: async () => {
+      if (allLessonIds.length === 0) return {};
+      
+      const { data, error } = await supabase
+        .from('lesson_tiles')
+        .select('id, title, lesson_id, position')
+        .in('lesson_id', allLessonIds)
+        .order('position', { ascending: true });
+      
+      if (error) throw error;
+      
+      // Group by lesson_id
+      const grouped: Record<string, LessonTileBasic[]> = {};
+      data?.forEach((tile: any) => {
+        if (!grouped[tile.lesson_id]) {
+          grouped[tile.lesson_id] = [];
+        }
+        grouped[tile.lesson_id].push({
+          id: tile.id,
+          title: tile.title,
+          tile_order: tile.position,
+        });
+      });
+      
+      return grouped;
+    },
+    enabled: allLessonIds.length > 0,
+  });
   
   const progressPercent = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
   
@@ -75,6 +124,22 @@ export function LessonSidebar({
       e.preventDefault();
       setShowLockedModal(true);
     }
+  };
+
+  const toggleLessonExpand = (lessonId: string) => {
+    setExpandedLessons(prev => {
+      const next = new Set(prev);
+      if (next.has(lessonId)) {
+        next.delete(lessonId);
+      } else {
+        next.add(lessonId);
+      }
+      return next;
+    });
+  };
+
+  const getLessonTiles = (lessonId: string): LessonTileBasic[] => {
+    return allTiles?.[lessonId]?.filter(t => t.title && t.title.trim().length > 0) || [];
   };
 
   return (
@@ -114,9 +179,6 @@ export function LessonSidebar({
                 >
                   <AccordionTrigger className="hover:no-underline px-3 py-2 rounded-lg hover:bg-secondary/50 text-sm font-medium">
                     <div className="flex items-center gap-2 text-left">
-                      <span className="text-xs text-muted-foreground min-w-[20px]">
-                        {module.module_order}.
-                      </span>
                       <span className="line-clamp-2">{module.title}</span>
                     </div>
                   </AccordionTrigger>
@@ -127,46 +189,78 @@ export function LessonSidebar({
                                         lesson.lesson_order === currentLessonOrder;
                         const isCompleted = isLessonCompleted(lesson.id);
                         const isFree = lesson.is_free;
+                        const tiles = getLessonTiles(lesson.id);
+                        const hasTiles = tiles.length > 0;
+                        const isExpanded = expandedLessons.has(lesson.id);
                         
                         return (
                           <li key={lesson.id}>
-                            <Link
-                              to={isFree ? `/learn/${courseSlug}/${module.module_order}/${lesson.lesson_order}` : '#'}
-                              onClick={(e) => handleLessonClick(e, lesson, module.module_order)}
-                              className={cn(
-                                "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors",
-                                isActive 
-                                  ? "bg-primary/10 text-primary font-medium" 
-                                  : isFree
-                                    ? "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                                    : "text-muted-foreground/60 hover:bg-secondary/30 cursor-pointer"
-                              )}
-                            >
-                              <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
-                                {isCompleted ? (
-                                  <Check className="h-4 w-4 text-success" />
-                                ) : !isFree ? (
-                                  <Lock className="h-3 w-3" />
-                                ) : isActive ? (
-                                  <Play className="h-3 w-3 text-primary" />
-                                ) : (
-                                  <span className="text-xs text-muted-foreground">
-                                    {lesson.lesson_order}
+                            <Collapsible open={isExpanded} onOpenChange={() => hasTiles && toggleLessonExpand(lesson.id)}>
+                              <div className="flex items-center">
+                                {/* Triangle toggle */}
+                                <CollapsibleTrigger 
+                                  className={cn(
+                                    "flex-shrink-0 w-5 h-5 flex items-center justify-center transition-transform",
+                                    !hasTiles && "opacity-30 cursor-default"
+                                  )}
+                                  disabled={!hasTiles}
+                                >
+                                  <ChevronRight className={cn(
+                                    "h-3 w-3 transition-transform duration-200",
+                                    isExpanded && "rotate-90"
+                                  )} />
+                                </CollapsibleTrigger>
+                                
+                                {/* Lesson link */}
+                                <Link
+                                  to={isFree ? `/learn/${courseSlug}/${module.module_order}/${lesson.lesson_order}` : '#'}
+                                  onClick={(e) => handleLessonClick(e, lesson, module.module_order)}
+                                  className={cn(
+                                    "flex items-center gap-2 px-2 py-2 rounded-lg text-sm transition-colors flex-1",
+                                    isActive 
+                                      ? "bg-primary/10 text-primary font-medium" 
+                                      : isFree
+                                        ? "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                                        : "text-muted-foreground/60 hover:bg-secondary/30 cursor-pointer"
+                                  )}
+                                >
+                                  <span className="flex-shrink-0 w-4 h-4 flex items-center justify-center">
+                                    {isCompleted ? (
+                                      <Check className="h-3 w-3 text-success" />
+                                    ) : !isFree ? (
+                                      <Lock className="h-3 w-3" />
+                                    ) : isActive ? (
+                                      <Play className="h-3 w-3 text-primary" />
+                                    ) : null}
                                   </span>
-                                )}
-                              </span>
-                              <span className={cn(
-                                "line-clamp-2 text-left flex-1",
-                                !isFree && "blur-[2px] select-none"
-                              )}>
-                                {lesson.title}
-                              </span>
-                              {!isFree && (
-                                <Badge variant="outline" className="text-[10px] opacity-60 flex-shrink-0 px-1">
-                                  <Lock className="h-2 w-2" />
-                                </Badge>
-                              )}
-                            </Link>
+                                  <span className={cn(
+                                    "line-clamp-2 text-left flex-1",
+                                    !isFree && "blur-[2px] select-none"
+                                  )}>
+                                    {lesson.title}
+                                  </span>
+                                  {!isFree && (
+                                    <Badge variant="outline" className="text-[10px] opacity-60 flex-shrink-0 px-1">
+                                      <Lock className="h-2 w-2" />
+                                    </Badge>
+                                  )}
+                                </Link>
+                              </div>
+                              
+                              {/* Tiles list */}
+                              <CollapsibleContent>
+                                <ul className="ml-7 mt-1 space-y-0.5 border-l border-border/30 pl-3">
+                                  {tiles.map((tile) => (
+                                    <li 
+                                      key={tile.id}
+                                      className="text-xs text-muted-foreground py-1"
+                                    >
+                                      {tile.title}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </CollapsibleContent>
+                            </Collapsible>
                           </li>
                         );
                       })}
