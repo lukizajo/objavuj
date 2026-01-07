@@ -195,69 +195,69 @@ export function LessonSidebar({
                         
                         return (
                           <li key={lesson.id}>
-                            <Collapsible open={isExpanded}>
-                              <div className="flex items-center">
-                                {/* Triangle toggle */}
-                                {hasTiles ? (
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      toggleLessonExpand(lesson.id);
-                                    }}
-                                    className="flex-shrink-0 w-5 h-5 flex items-center justify-center"
-                                  >
-                                    <ChevronRight className={cn(
-                                      "h-3 w-3 transition-transform duration-200",
-                                      isExpanded && "rotate-90"
-                                    )} />
-                                  </button>
-                                ) : (
-                                  <span className="flex-shrink-0 w-5 h-5" />
+                            <div className="flex items-center">
+                              {/* Triangle toggle - only show if has tiles */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  if (hasTiles) {
+                                    toggleLessonExpand(lesson.id);
+                                  }
+                                }}
+                                className={cn(
+                                  "flex-shrink-0 w-5 h-5 flex items-center justify-center",
+                                  hasTiles ? "cursor-pointer" : "cursor-default opacity-0"
                                 )}
-                                
-                                {/* Lesson link */}
-                                <Link
-                                  to={isFree ? `/learn/${courseSlug}/${module.module_order}/${lesson.lesson_order}` : '#'}
-                                  onClick={(e) => handleLessonClick(e, lesson, module.module_order)}
-                                  className={cn(
-                                    "flex items-center gap-2 px-2 py-2 rounded-lg text-sm transition-colors flex-1",
-                                    isActive 
-                                      ? "bg-primary/10 text-primary font-medium" 
-                                      : isFree
-                                        ? "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                                        : "text-muted-foreground/60 hover:bg-secondary/30 cursor-pointer"
-                                  )}
-                                >
-                                  <span className={cn(
-                                    "line-clamp-2 text-left flex-1",
-                                    !isFree && "blur-[2px] select-none"
-                                  )}>
-                                    {lesson.title}
-                                  </span>
-                                  {!isFree && (
-                                    <Badge variant="outline" className="text-[10px] opacity-60 flex-shrink-0 px-1">
-                                      <Lock className="h-2 w-2" />
-                                    </Badge>
-                                  )}
-                                </Link>
-                              </div>
+                                disabled={!hasTiles}
+                              >
+                                <ChevronRight className={cn(
+                                  "h-3 w-3 transition-transform duration-200",
+                                  isExpanded && "rotate-90"
+                                )} />
+                              </button>
                               
-                              {/* Tiles list */}
-                              <CollapsibleContent>
-                                <ul className="ml-7 mt-1 space-y-0.5 border-l border-border/30 pl-3">
-                                  {tiles.map((tile) => (
-                                    <li 
-                                      key={tile.id}
-                                      className="text-xs text-muted-foreground py-1"
-                                    >
-                                      {tile.title}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </CollapsibleContent>
-                            </Collapsible>
+                              {/* Lesson link */}
+                              <Link
+                                to={isFree ? `/learn/${courseSlug}/${module.module_order}/${lesson.lesson_order}` : '#'}
+                                onClick={(e) => handleLessonClick(e, lesson, module.module_order)}
+                                className={cn(
+                                  "flex items-center gap-2 px-2 py-2 rounded-lg text-sm transition-colors flex-1",
+                                  isActive 
+                                    ? "bg-primary/10 text-primary font-medium" 
+                                    : isFree
+                                      ? "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                                      : "text-muted-foreground/60 hover:bg-secondary/30 cursor-pointer"
+                                )}
+                              >
+                                <span className={cn(
+                                  "line-clamp-2 text-left flex-1",
+                                  !isFree && "blur-[2px] select-none"
+                                )}>
+                                  {lesson.title}
+                                </span>
+                                {!isFree && (
+                                  <Badge variant="outline" className="text-[10px] opacity-60 flex-shrink-0 px-1">
+                                    <Lock className="h-2 w-2" />
+                                  </Badge>
+                                )}
+                              </Link>
+                            </div>
+                            
+                            {/* Tiles list - expandable */}
+                            {hasTiles && isExpanded && (
+                              <ul className="ml-7 mt-1 space-y-0.5 border-l border-border/30 pl-3">
+                                {tiles.map((tile) => (
+                                  <li 
+                                    key={tile.id}
+                                    className="text-xs text-muted-foreground py-1"
+                                  >
+                                    {tile.title}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
                           </li>
                         );
                       })}
