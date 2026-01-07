@@ -196,7 +196,7 @@ export function LessonSidebar({
                         return (
                           <li key={lesson.id}>
                             <div className="flex items-center">
-                              {/* Triangle toggle - only show if has tiles */}
+                              {/* Triangle toggle */}
                               <button
                                 type="button"
                                 onClick={(e) => {
@@ -208,7 +208,7 @@ export function LessonSidebar({
                                 }}
                                 className={cn(
                                   "flex-shrink-0 w-5 h-5 flex items-center justify-center",
-                                  hasTiles ? "cursor-pointer" : "cursor-default opacity-0"
+                                  hasTiles ? "cursor-pointer hover:text-primary" : "cursor-default opacity-30"
                                 )}
                                 disabled={!hasTiles}
                               >
