@@ -195,21 +195,27 @@ export function LessonSidebar({
                         
                         return (
                           <li key={lesson.id}>
-                            <Collapsible open={isExpanded} onOpenChange={() => hasTiles && toggleLessonExpand(lesson.id)}>
+                            <Collapsible open={isExpanded}>
                               <div className="flex items-center">
                                 {/* Triangle toggle */}
-                                <CollapsibleTrigger 
-                                  className={cn(
-                                    "flex-shrink-0 w-5 h-5 flex items-center justify-center transition-transform",
-                                    !hasTiles && "opacity-30 cursor-default"
-                                  )}
-                                  disabled={!hasTiles}
-                                >
-                                  <ChevronRight className={cn(
-                                    "h-3 w-3 transition-transform duration-200",
-                                    isExpanded && "rotate-90"
-                                  )} />
-                                </CollapsibleTrigger>
+                                {hasTiles ? (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      toggleLessonExpand(lesson.id);
+                                    }}
+                                    className="flex-shrink-0 w-5 h-5 flex items-center justify-center"
+                                  >
+                                    <ChevronRight className={cn(
+                                      "h-3 w-3 transition-transform duration-200",
+                                      isExpanded && "rotate-90"
+                                    )} />
+                                  </button>
+                                ) : (
+                                  <span className="flex-shrink-0 w-5 h-5" />
+                                )}
                                 
                                 {/* Lesson link */}
                                 <Link
@@ -224,15 +230,6 @@ export function LessonSidebar({
                                         : "text-muted-foreground/60 hover:bg-secondary/30 cursor-pointer"
                                   )}
                                 >
-                                  <span className="flex-shrink-0 w-4 h-4 flex items-center justify-center">
-                                    {isCompleted ? (
-                                      <Check className="h-3 w-3 text-success" />
-                                    ) : !isFree ? (
-                                      <Lock className="h-3 w-3" />
-                                    ) : isActive ? (
-                                      <Play className="h-3 w-3 text-primary" />
-                                    ) : null}
-                                  </span>
                                   <span className={cn(
                                     "line-clamp-2 text-left flex-1",
                                     !isFree && "blur-[2px] select-none"
