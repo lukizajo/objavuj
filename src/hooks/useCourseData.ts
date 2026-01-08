@@ -40,18 +40,20 @@ export interface Lesson {
 }
 
 // LessonTile interface matching actual DB schema (lesson_tiles table)
-// DB columns: id, lesson_id, position, type, title, body_md, body_json, is_required, icon, created_at
 export interface LessonTile {
   id: string;
   lesson_id: string;
-  position: number;
-  type: string;
+  tile_order: number;
+  tile_type: string;
   title: string | null;
-  body_md: string | null;
-  body_json: unknown | null;
+  content_md: string | null;
+  media_url: string | null;
   is_required: boolean;
-  icon: string;
+  estimated_minutes: number | null;
+  mini_task_id: string | null;
+  mini_test_id: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 // Mapped tile data for components (normalized interface)
@@ -64,28 +66,23 @@ export interface MappedLessonTile {
   content_md: string | null;
   is_required: boolean;
   media_url: string | null;
-  body_json: unknown | null;
   mini_task_id: string | null;
+  mini_test_id: string | null;
 }
 
 // Map DB tile to component tile
 function mapTileToComponent(tile: LessonTile): MappedLessonTile {
-  // Extract media_url and mini_task_id from body_json if present
-  const bodyJson = tile.body_json as Record<string, unknown> | null;
-  const mediaUrl = bodyJson?.media_url as string | null;
-  const miniTaskId = bodyJson?.mini_task_id as string | null;
-  
   return {
     id: tile.id,
     lesson_id: tile.lesson_id,
-    tile_type: tile.type as TileType,
-    tile_order: tile.position,
+    tile_type: tile.tile_type as TileType,
+    tile_order: tile.tile_order,
     title: tile.title || '',
-    content_md: tile.body_md,
+    content_md: tile.content_md,
     is_required: tile.is_required,
-    media_url: mediaUrl,
-    body_json: tile.body_json,
-    mini_task_id: miniTaskId,
+    media_url: tile.media_url,
+    mini_task_id: tile.mini_task_id,
+    mini_test_id: tile.mini_test_id,
   };
 }
 
@@ -309,13 +306,13 @@ export function useLesson(courseSlug: string, moduleOrder: number, lessonOrder: 
         };
       }
       
-      // Step 4: Get lesson tiles - using position (actual DB column)
+      // Step 4: Get lesson tiles
       let tiles: MappedLessonTile[] = [];
       const { data: tilesData, error: tilesError } = await supabase
         .from('lesson_tiles')
         .select('*')
         .eq('lesson_id', lesson.id)
-        .order('position', { ascending: true });
+        .order('tile_order', { ascending: true });
       
       if (tilesError) {
         console.error('Tiles fetch error:', tilesError);
