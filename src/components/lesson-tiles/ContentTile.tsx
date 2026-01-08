@@ -7,7 +7,8 @@ interface ContentTileProps {
 }
 
 export function ContentTile({ tile }: ContentTileProps) {
-  if (!tile.content_md) return null;
+  // If no content_md and no media_url, don't render
+  if (!tile.content_md && !tile.media_url) return null;
   
   const hasTitle = tile.title && tile.title.trim().length > 0;
   
@@ -16,7 +17,17 @@ export function ContentTile({ tile }: ContentTileProps) {
       {hasTitle && (
         <h3 className="text-lg font-display font-semibold text-foreground mb-4">{tile.title}</h3>
       )}
-      <MarkdownContent content={tile.content_md} />
+      {tile.content_md ? (
+        <MarkdownContent content={tile.content_md} />
+      ) : tile.media_url ? (
+        <div className="aspect-video rounded-lg overflow-hidden">
+          <img 
+            src={tile.media_url} 
+            alt={tile.title || 'Media content'} 
+            className="w-full h-full object-cover"
+          />
+        </div>
+      ) : null}
     </GlassCard>
   );
 }
