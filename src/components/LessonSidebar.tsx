@@ -87,9 +87,9 @@ export function LessonSidebar({
       
       const { data, error } = await supabase
         .from('lesson_tiles')
-        .select('id, title, lesson_id, position')
+        .select('id, title, lesson_id, tile_order')
         .in('lesson_id', allLessonIds)
-        .order('position', { ascending: true });
+        .order('tile_order', { ascending: true });
       
       if (error) throw error;
       
