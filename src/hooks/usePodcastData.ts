@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-// Note: podcast_episodes table doesn't exist in external DB
-// This hook returns empty data until the table is created
+import { supabase } from '@/integrations/supabase/client';
 
 export interface PodcastEpisode {
   id: string;
@@ -20,10 +19,17 @@ export function usePodcastEpisodes() {
   return useQuery({
     queryKey: ['podcast-episodes'],
     queryFn: async (): Promise<PodcastEpisode[]> => {
-      // podcast_episodes table doesn't exist in external DB
-      // Return empty array to avoid 400 errors
-      console.warn('podcast_episodes table not available in external database');
-      return [];
+      const { data, error } = await supabase
+        .from('podcast_episodes')
+        .select('*')
+        .order('published_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching podcast episodes:', error);
+        throw error;
+      }
+      
+      return data || [];
     },
   });
 }
