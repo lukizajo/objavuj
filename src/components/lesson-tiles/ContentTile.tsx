@@ -20,16 +20,33 @@ export function ContentTile({ tile }: ContentTileProps) {
   if (!tile.content_md && !tile.media_url) return null;
   
   const hasTitle = tile.title && tile.title.trim().length > 0;
+  const isGamma = tile.media_url && isGammaUrl(tile.media_url);
+  
+  // For Gamma presentations - full bleed, no padding
+  if (isGamma && !tile.content_md && !hasTitle) {
+    return (
+      <GlassCard variant="hover" padding="none" className="overflow-hidden">
+        <iframe
+          src={getGammaEmbedUrl(tile.media_url!)}
+          className="w-full border-0"
+          style={{ height: '70vh', minHeight: '500px' }}
+          allow="fullscreen"
+          title={tile.title || 'Gamma prezentácia'}
+        />
+      </GlassCard>
+    );
+  }
   
   const renderMedia = () => {
     if (!tile.media_url) return null;
     
-    if (isGammaUrl(tile.media_url)) {
+    if (isGamma) {
       return (
-        <div className="aspect-[16/10] rounded-lg overflow-hidden">
+        <div className="-mx-6 -mb-6 mt-4">
           <iframe
             src={getGammaEmbedUrl(tile.media_url)}
-            className="w-full h-full border-0"
+            className="w-full border-0"
+            style={{ height: '70vh', minHeight: '500px' }}
             allow="fullscreen"
             title={tile.title || 'Gamma prezentácia'}
           />
